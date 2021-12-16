@@ -1,0 +1,23 @@
+
+name: Development workflow
+on:
+  push:
+    branches: [ develop ]
+
+jobs:
+  setup:
+    runs-on: self-hosted
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set Up ENV
+      run: |
+          echo "${{ secrets.DATABASE }}" > .env
+          echo "${{ secrets.EMAIL_FROM }}" >> .env
+          echo "${{ secrets.EMAIL_TIPOFF }}" >> .env
+          echo "${{ secrets.JMOD_TAG }}" >> .env
+          echo "${{ secrets.SERVER_ADDRESS }}" >> .env
+          echo "${{ secrets.SERVER_LOGIN }}" >> .env
+          echo "${{ secrets.SERVER_PASSWORD }}" >> .env
+          echo "${{ secrets.SMTP_PASSWORD }}" >> .env
+          echo "${{ secrets.SMTP_PORT }}" >> .env
+          echo "${{ secrets.SMTP_SERVER}}" >> .env
