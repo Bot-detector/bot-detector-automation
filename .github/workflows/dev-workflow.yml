@@ -21,3 +21,13 @@ jobs:
           echo "${{ secrets.SMTP_PASSWORD }}" >> .env
           echo "${{ secrets.SMTP_PORT }}" >> .env
           echo "${{ secrets.SMTP_SERVER}}" >> .env
+          
+    - name: Set up virtualenv
+      run: |
+        python3 -m venv env
+        source env/bin/activate
+      
+    - name: Install requirements
+      run: pip3 install -r requirements.txt
+        
+      
