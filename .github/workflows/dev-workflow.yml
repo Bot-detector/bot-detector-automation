@@ -21,12 +21,10 @@ jobs:
           echo "${{ secrets.SMTP_PASSWORD }}" >> .env
           echo "${{ secrets.SMTP_PORT }}" >> .env
           echo "${{ secrets.SMTP_SERVER}}" >> .env
-          
+
     - name: Set up virtualenv
-      run: python3 -m venv env
-      
-    - name: Switch to virtualenv
-      run: source env/bin/activate
-      
-    - name: Install requirements
-      run: pip3 install -r requirements.txt
+      run: |
+          (test -d env && rm -rf env || python3 -m venv env)
+          source ./env/bin/activate
+          python3 -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip3 install -r requirements.txt; fi
