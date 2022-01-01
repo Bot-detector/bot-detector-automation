@@ -1,10 +1,3 @@
-import pandas as pd
-from dotenv import load_dotenv
-import os
-import pymysql
-
-load_dotenv()
-
 TIPOFF_CONFIG = '''
                 SELECT DISTINCT
                     pl.name,
@@ -27,17 +20,3 @@ TIPOFF_CONFIG = '''
                     and p.prediction != 'Stats Too Low'
                     and rp.timestamp >= current_timestamp() - interval 1 day
                 '''
-
-def get_tipoff_data():
-    connection = pymysql.connect(
-                                host=os.getenv('SERVER_ADDRESS'),
-                                user=os.getenv('SERVER_LOGIN'),
-                                passwd=os.getenv('SERVER_PASSWORD'),
-                                database=os.getenv('DATABASE')
-                                )
-    cursor = connection.cursor()
-    cursor.execute(TIPOFF_CONFIG)
-    df = pd.DataFrame([tuple(row) for row in cursor.fetchall()], columns = [desc[0] for desc in cursor.description])
-    connection.commit()
-    connection.close()
-    return df
