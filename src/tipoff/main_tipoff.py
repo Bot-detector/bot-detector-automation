@@ -3,19 +3,19 @@ from datetime import date, datetime
 from typing import List
 
 import banbroadcaster.functions as functions
-from discord_webhook import DiscordWebhook
-from discord_webhook.webhook import DiscordEmbed
 from dotenv import find_dotenv, load_dotenv
 
-from tipoff.functions import *
+import tipoff.functions as functions
 
-def send_tipoff():
+load_dotenv(find_dotenv(), verbose=True)
+
+def tipoff_bots():
     try:
         os.mkdir('Reports/')
     except FileExistsError:
         pass
 
-    df = get_tipoff_data()
+    df = functions.get_tipoff_data()
     today_ISO = date.today().isoformat()
     dataframe_length = len(df.index)
 
@@ -29,5 +29,5 @@ def send_tipoff():
         MESSAGE_BODY = f'Bot Detector Plugin Report for {today_ISO}.'
         EMAIL_SUBJECT = f'{REPORT_NAME} | ' + os.getenv('JMOD_TAG')
 
-        send_tipoff(MESSAGE_BODY=MESSAGE_BODY, EMAIL_SUBJECT=EMAIL_SUBJECT,
-                    PATH_TO_CSV_FILE=PATH_TO_CSV_FILE, FILE_NAME=REPORT_FILE_NAME)
+        functions.send_tipoff(MESSAGE_BODY=MESSAGE_BODY, EMAIL_SUBJECT=EMAIL_SUBJECT,
+                                PATH_TO_CSV_FILE=PATH_TO_CSV_FILE, FILE_NAME=REPORT_FILE_NAME)

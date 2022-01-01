@@ -12,7 +12,6 @@ from tipoff.queries import *
 
 load_dotenv()
 
-
 def get_tipoff_data():
     connection = pymysql.connect(
         host=os.getenv('SERVER_ADDRESS'),
