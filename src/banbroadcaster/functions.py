@@ -15,10 +15,8 @@ from banbroadcaster.queries import *
 load_dotenv(find_dotenv(), verbose=True)
 
 GRAVEYARD_WEBHOOK_URL = os.environ.get('GRAVEYARD_WEBHOOK')
-AUTH = tweepy.OAuthHandler(consumer_key=os.environ.get(
-    'consumer_key'), consumer_secret=os.environ.get('consumer_secret'))
-AUTH.set_access_token(key=os.environ.get('access_token'),
-                      secret=os.environ.get('access_token_secret'))
+AUTH = tweepy.OAuthHandler(consumer_key=os.environ.get('consumer_key'), consumer_secret=os.environ.get('consumer_secret'))
+AUTH.set_access_token(key=os.environ.get('access_token'),  secret=os.environ.get('access_token_secret'))
 TWITTER_API = tweepy.API(AUTH, wait_on_rate_limit=True)
 
 
