@@ -160,9 +160,16 @@ def post_breakdown_tweet(predictions: List[str]):
     #Grab the leftovers!
     tweets.append(current_tweet)
 
+    previous_status = None
+
     for i, tweet in enumerate(tweets):
         tweet += f"({i+1}/{len(tweets)})"
-        TWITTER_API.update_status(tweet)
+
+        if i == 0:
+            previous_status = TWITTER_API.update_status(tweet)
+        else:
+            previous_status = TWITTER_API.update_status(tweet, in_reply_to_status_id=previous_status.id)
+
         time.sleep(3)
 
     return
