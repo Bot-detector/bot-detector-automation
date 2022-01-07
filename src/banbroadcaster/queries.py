@@ -34,7 +34,8 @@ WHERE possible_ban = 1
 
 sql_get_banned_bots_names = '''
     SELECT
-        pls.name as name
+        pls.name as name,
+        pred.Prediction as prediction
     FROM Players pls
     JOIN Predictions pred on pred.name = pls.name
     WHERE possible_ban = 1 

@@ -1,5 +1,6 @@
 import os
 import time
+import operator
 from collections import namedtuple
 from datetime import date, datetime
 from typing import List, NamedTuple
@@ -58,10 +59,12 @@ def get_ban_counts():
     try:
         bot_records = execute_sql(sql=sql_get_banned_bots_names)
         banned_bot_names = [record.name for record in bot_records]
+        banned_bot_predictions = [record.prediction for record in bot_records]
     except IndexError:
         banned_bot_names = []
+        banned_bot_predictions = []
 
-    return total_pending_bans, real_player_bans, no_data_bans, banned_bot_names
+    return total_pending_bans, real_player_bans, no_data_bans, banned_bot_names, banned_bot_predictions
 
 
 def apply_bot_bans():
@@ -134,5 +137,51 @@ def broadcast_names(names_list: List[str]):
 
 
 def post_bans_tweet(num_bans: int):
-    msg = f"BANS ALERT - {datetime.now().strftime('%d-%m-%Y')}: {num_bans:,d} accounts our system has detected as bots have been banned in the last 24 hours."
+    msg = f"BANS ALERT - {datetime.now().strftime('%d-%m-%Y')}: {num_bans:,d} accounts our system has detected as bots have been banned in the past 24 hours."
     TWITTER_API.update_status(msg)
+
+
+def post_breakdown_tweet(predictions: List[str]):
+    predictions_groupings = group_predictions(predictions)
+
+    tweets = []
+    
+    current_tweet = "Bans by Category:\n"
+
+    for pred, count in predictions_groupings.items():
+        pred_string = f"{pred}: {count}\n"
+
+        if (len(current_tweet) + len(pred_string)) >= 240:
+            tweets.append(current_tweet)
+            current_tweet = pred_string
+        else:
+            current_tweet += pred_string
+    
+    #Grab the leftovers!
+    tweets.append(current_tweet)
+
+    for i, tweet in enumerate(tweets):
+        tweet += f"({i+1}/{len(tweets)})"
+        TWITTER_API.update_status(tweet)
+        time.sleep(3)
+
+    return
+
+
+def group_predictions(predictions: List[str]):
+    grouped = {}
+
+    for p in predictions:
+        if p.lower() == "real_player" or p.lower() == "stats too low":
+            current_pred = "Toss up (Didn't last long)"
+        else:
+            current_pred = p.replace('_', ' ')
+
+        group = grouped.get(current_pred)
+
+        if group is None:
+            grouped[current_pred] = 1
+        else:
+            grouped[current_pred] += 1
+
+    return dict(sorted(grouped.items(), key=operator.itemgetter(1), reverse=True)
