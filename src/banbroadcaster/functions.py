@@ -163,7 +163,7 @@ def post_breakdown_tweets(predictions: List[str]):
     return
 
 
-def generate_breakdown_tweets(predictions: List[str])
+def generate_breakdown_tweets(predictions: List[str]):
     predictions_groupings = group_predictions(predictions)
 
     tweets = []
