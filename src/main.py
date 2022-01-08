@@ -6,7 +6,7 @@ import banbroadcaster.main_broadcaster
 scheduler = BackgroundScheduler()
 
 if __name__ == '__main__':
-    #Broadcast bans to #bot-graveyard on Discord, sent total bans tweet, and send bans breakdowns tweets
+    #Broadcast bans to #bot-graveyard on Discord, send total bans tweet, and send bans breakdowns tweets
     scheduler.add_job(banbroadcaster.main_broadcaster.broadcast_bans, 'cron', hour=20, minute=5, misfire_grace_time=60)
 
     #Send next tipoff batch to Jagex
