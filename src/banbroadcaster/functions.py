@@ -191,4 +191,4 @@ def group_predictions(predictions: List[str]):
         else:
             grouped[current_pred] += 1
 
-    return dict(sorted(grouped.items(), key=operator.itemgetter(1), reverse=True)
+    return dict(sorted(grouped.items(), key=operator.itemgetter(1), reverse=True))
