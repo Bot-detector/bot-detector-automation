@@ -6,4 +6,5 @@ pytz==2021.3
 six==1.16.0
 discord-webhook==0.14.0
 mysql-connector-python==8.0.23
-tweepy
+tweepy==4.4.0
+apscheduler==3.8.1
