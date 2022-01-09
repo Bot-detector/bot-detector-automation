@@ -15,7 +15,7 @@ if __name__ == '__main__':
     scheduler.start()
 
     #Broadcast bans to #bot-graveyard on Discord, send total bans tweet, and send bans breakdowns tweets
-    scheduler.add_job(banbroadcaster.main_broadcaster.broadcast_bans, 'cron', hour=15, minute=26, misfire_grace_time=60)
+    scheduler.add_job(banbroadcaster.main_broadcaster.broadcast_bans, 'cron', hour=10, minute=5, misfire_grace_time=60)
 
     #Send next tipoff batch to Jagex
     scheduler.add_job(tipoff.main_tipoff.tipoff_bots, 'cron', hour=20, minute=45, misfire_grace_time=60)
