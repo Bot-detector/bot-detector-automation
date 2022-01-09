@@ -16,4 +16,4 @@ def broadcast_bans():
     banbroadcaster.functions.apply_bot_bans()
     banbroadcaster.functions.broadcast_bans_complete(num_bans=num_bots_banned)
     banbroadcaster.functions.post_bans_tweet(num_bans=num_bots_banned)
-    banbroadcaster.functions.post_breakdown_tweet(banned_bot_predictions)
+    banbroadcaster.functions.post_breakdown_tweets(banned_bot_predictions)

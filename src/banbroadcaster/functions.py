@@ -141,7 +141,29 @@ def post_bans_tweet(num_bans: int):
     TWITTER_API.update_status(msg)
 
 
-def post_breakdown_tweet(predictions: List[str]):
+def post_breakdown_tweets(predictions: List[str]):
+
+    tweets = generate_breakdown_tweets(predictions)
+
+    if len(tweets) == 0:
+        return
+
+    previous_status = None
+
+    for i, tweet in enumerate(tweets):
+        tweet += f"({i+1}/{len(tweets)})"
+
+        if i == 0:
+            previous_status = TWITTER_API.update_status(tweet)
+        else:
+            previous_status = TWITTER_API.update_status(tweet, in_reply_to_status_id=previous_status.id)
+
+        time.sleep(3)
+
+    return
+
+
+def generate_breakdown_tweets(predictions: List[str]):
     predictions_groupings = group_predictions(predictions)
 
     tweets = []
@@ -160,12 +182,7 @@ def post_breakdown_tweet(predictions: List[str]):
     #Grab the leftovers!
     tweets.append(current_tweet)
 
-    for i, tweet in enumerate(tweets):
-        tweet += f"({i+1}/{len(tweets)})"
-        TWITTER_API.update_status(tweet)
-        time.sleep(3)
-
-    return
+    return tweets
 
 
 def group_predictions(predictions: List[str]):
@@ -184,4 +201,4 @@ def group_predictions(predictions: List[str]):
         else:
             grouped[current_pred] += 1
 
-    return dict(sorted(grouped.items(), key=operator.itemgetter(1), reverse=True)
+    return dict(sorted(grouped.items(), key=operator.itemgetter(1), reverse=True))
