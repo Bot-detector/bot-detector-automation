@@ -1,9 +1,15 @@
 from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.executors.pool import ProcessPoolExecutor
+from pytz import timezone
 
 import tipoff.main_tipoff
 import banbroadcaster.main_broadcaster
 
-scheduler = BackgroundScheduler()
+executors = {
+    'default': ProcessPoolExecutor()
+}
+
+scheduler = BackgroundScheduler(daemon=False, executors=executors)
 
 if __name__ == '__main__':
     #Broadcast bans to #bot-graveyard on Discord, send total bans tweet, and send bans breakdowns tweets
