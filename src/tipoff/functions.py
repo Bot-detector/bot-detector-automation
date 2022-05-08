@@ -7,12 +7,14 @@ from email.mime.text import MIMEText
 import pandas as pd
 import pymysql
 from dotenv import load_dotenv
+import logging
 
 from tipoff.queries import *
 
 load_dotenv()
 
 def get_tipoff_data():
+    logging.info('Getting tipoff information')
     connection = pymysql.connect(
         host=os.getenv('SERVER_ADDRESS'),
         user=os.getenv('SERVER_LOGIN'),
@@ -29,6 +31,7 @@ def get_tipoff_data():
 
 
 def send_tipoff(MESSAGE_BODY, EMAIL_SUBJECT, PATH_TO_CSV_FILE, FILE_NAME):
+    logging.info('Sending Tipoff')
     msg = MIMEMultipart()
     body_part = MIMEText(MESSAGE_BODY, 'plain')
 
