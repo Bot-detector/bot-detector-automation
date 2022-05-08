@@ -141,7 +141,7 @@ def broadcast_names(names_list: List[str]):
 
 def post_bans_tweet(num_bans: int):
     logging.info('Posting Ban Tweet')
-    msg = f"[TEST TWEET] BANS ALERT - {datetime.now().strftime('%d-%m-%Y')}: {num_bans:,d} accounts our system has detected as bots have been banned in the past 24 hours."
+    msg = f"BANS ALERT - {datetime.now().strftime('%d-%m-%Y')}: {num_bans:,d} accounts our system has detected as bots have been banned in the past 24 hours."
     TWITTER_API.update_status(msg)
 
 
