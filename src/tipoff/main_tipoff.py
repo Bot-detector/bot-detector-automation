@@ -2,14 +2,15 @@ import os
 from datetime import date, datetime
 from typing import List
 
-import banbroadcaster.functions as functions
 from dotenv import find_dotenv, load_dotenv
-
 import tipoff.functions as functions
+import logging
 
 load_dotenv(find_dotenv(), verbose=True)
 
 def tipoff_bots():
+    
+    logging.info("Crafting Tipoff")
     try:
         os.mkdir('Reports/')
     except FileExistsError:

@@ -7,6 +7,7 @@ from typing import List, NamedTuple
 
 import mysql.connector
 import tweepy
+import logging
 from discord_webhook import DiscordWebhook
 from discord_webhook.webhook import DiscordEmbed
 from dotenv import find_dotenv, load_dotenv
@@ -105,6 +106,8 @@ def broadcast_totals(total_bans: int, real_player_bans: int, no_data_bans: int, 
 
 
 def broadcast_names(names_list: List[str]):
+    
+    logging.info('Broadcasting Names')
     while True:
         num_pending_players = len(names_list)
         # if is empty list break
@@ -137,11 +140,13 @@ def broadcast_names(names_list: List[str]):
 
 
 def post_bans_tweet(num_bans: int):
+    logging.info('Posting Ban Tweet')
     msg = f"BANS ALERT - {datetime.now().strftime('%d-%m-%Y')}: {num_bans:,d} accounts our system has detected as bots have been banned in the past 24 hours."
     TWITTER_API.update_status(msg)
 
 
 def post_breakdown_tweets(predictions: List[str]):
+    logging.info('Posting Breakdown Tweet')
 
     tweets = generate_breakdown_tweets(predictions)
 
@@ -164,6 +169,7 @@ def post_breakdown_tweets(predictions: List[str]):
 
 
 def generate_breakdown_tweets(predictions: List[str]):
+    logging.info('Generating Breakdown Tweet')
     predictions_groupings = group_predictions(predictions)
 
     tweets = []
@@ -186,6 +192,8 @@ def generate_breakdown_tweets(predictions: List[str]):
 
 
 def group_predictions(predictions: List[str]):
+    
+    logging.info('Grouping Predictions')
     grouped = {}
 
     for p in predictions:
