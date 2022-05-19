@@ -1,34 +1,30 @@
-import os
-import time
+import logging
 import operator
+import time
 from collections import namedtuple
 from datetime import date, datetime
 from typing import List, NamedTuple
 
 import mysql.connector
 import tweepy
-import logging
+from config import (ACCESS_TOKEN, ACCESS_TOKEN_SECRET, CONSUMER_KEY,
+                    CONSUMER_SECRET, DATABASE, GRAVEYARD_WEBHOOK,
+                    SERVER_ADDRESS, SERVER_LOGIN, SERVER_PASSWORD)
 from discord_webhook import DiscordWebhook
 from discord_webhook.webhook import DiscordEmbed
-from dotenv import find_dotenv, load_dotenv
 
 from banbroadcaster.queries import *
 
-load_dotenv(find_dotenv(), verbose=True)
-
-GRAVEYARD_WEBHOOK_URL = os.environ.get('GRAVEYARD_WEBHOOK')
-AUTH = tweepy.OAuthHandler(consumer_key=os.environ.get(
-    'CONSUMER_KEY'), consumer_secret=os.environ.get('CONSUMER_SECRET'))
-AUTH.set_access_token(key=os.environ.get('ACCESS_TOKEN'),
-                      secret=os.environ.get('ACCESS_TOKEN_SECRET'))
+AUTH = tweepy.OAuthHandler(consumer_key=CONSUMER_KEY, consumer_secret=CONSUMER_SECRET)
+AUTH.set_access_token(key=ACCESS_TOKEN, secret=ACCESS_TOKEN_SECRET)
 TWITTER_API = tweepy.API(AUTH, wait_on_rate_limit=True)
 
 
 config_players = {
-    'user':       os.getenv('SERVER_LOGIN'),
-    'password':   os.getenv('SERVER_PASSWORD'),
-    'host':       os.getenv('SERVER_ADDRESS'),
-    'database':   os.getenv('DATABASE'),
+    'user':       SERVER_LOGIN,
+    'password':   SERVER_PASSWORD,
+    'host':       SERVER_ADDRESS,
+    'database':   DATABASE,
 }
 
 
@@ -81,11 +77,11 @@ def broadcast_bans_complete(num_bans: int):
         embed.add_embed_field(name="Total Bans Added:",
                               value=f"{num_bans:,}", inline=False)
         embed.set_thumbnail(url="https://oldschool.runescape.wiki/images/5/58/Crazy_dance.gif")
-        webhook = DiscordWebhook(url=GRAVEYARD_WEBHOOK_URL, rate_limit_retry=True)
+        webhook = DiscordWebhook(url=GRAVEYARD_WEBHOOK, rate_limit_retry=True)
         webhook.add_embed(embed=embed)
         webhook.execute()
 
-        webhook = DiscordWebhook(url=GRAVEYARD_WEBHOOK_URL, rate_limit_retry=True, content='<@&893399220172767253>')
+        webhook = DiscordWebhook(url=GRAVEYARD_WEBHOOK, rate_limit_retry=True, content='<@&893399220172767253>')
         webhook.execute()
 
 
@@ -100,7 +96,7 @@ def broadcast_totals(total_bans: int, real_player_bans: int, no_data_bans: int, 
     embed.set_thumbnail(
         url="https://c.tenor.com/V71SmWqyYHkAAAAM/kermit-freaking.gif")
 
-    webhook = DiscordWebhook(url=GRAVEYARD_WEBHOOK_URL, rate_limit_retry=True)
+    webhook = DiscordWebhook(url=GRAVEYARD_WEBHOOK, rate_limit_retry=True)
     webhook.add_embed(embed=embed)
     webhook.execute()
 
@@ -129,7 +125,7 @@ def broadcast_names(names_list: List[str]):
                               value=f"{', '.join(players_to_broadcast)}")
         embed.set_thumbnail(url="https://i.imgur.com/PPnZRHW.gif")
 
-        webhook = DiscordWebhook(url=GRAVEYARD_WEBHOOK_URL)
+        webhook = DiscordWebhook(url=GRAVEYARD_WEBHOOK)
         webhook.add_embed(embed=embed)
 
         try:

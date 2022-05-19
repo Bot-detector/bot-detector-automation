@@ -1,4 +1,4 @@
-import os
+import logging
 import smtplib
 from email.mime.application import MIMEApplication
 from email.mime.multipart import MIMEMultipart
@@ -6,8 +6,10 @@ from email.mime.text import MIMEText
 
 import pandas as pd
 import pymysql
+from config import (DATABASE, EMAIL_FROM, EMAIL_TIPOFF, SERVER_ADDRESS,
+                    SERVER_LOGIN, SERVER_PASSWORD, SMTP_PASSWORD, SMTP_PORT,
+                    SMTP_SERVER)
 from dotenv import load_dotenv
-import logging
 
 from tipoff.queries import *
 
@@ -16,10 +18,10 @@ load_dotenv()
 def get_tipoff_data():
     logging.info('Getting tipoff information')
     connection = pymysql.connect(
-        host=os.getenv('SERVER_ADDRESS'),
-        user=os.getenv('SERVER_LOGIN'),
-        passwd=os.getenv('SERVER_PASSWORD'),
-        database=os.getenv('DATABASE')
+        host=SERVER_ADDRESS,
+        user=SERVER_LOGIN,
+        passwd=SERVER_PASSWORD,
+        database=DATABASE
     )
     cursor = connection.cursor()
     cursor.execute(TIPOFF_CONFIG)
@@ -36,14 +38,13 @@ def send_tipoff(MESSAGE_BODY, EMAIL_SUBJECT, PATH_TO_CSV_FILE, FILE_NAME):
     body_part = MIMEText(MESSAGE_BODY, 'plain')
 
     msg['Subject'] = EMAIL_SUBJECT
-    msg['From'] = os.getenv('EMAIL_FROM')
-    msg['To'] = os.getenv('EMAIL_TIPOFF')
+    msg['From'] = EMAIL_FROM
+    msg['To'] = EMAIL_TIPOFF
 
     msg.attach(body_part)
     with open(PATH_TO_CSV_FILE, 'rb') as file:
         msg.attach(MIMEApplication(file.read(), Name=FILE_NAME))
-    smtp_obj = smtplib.SMTP_SSL(
-        os.getenv('SMTP_SERVER'), os.getenv('SMTP_PORT'))
-    smtp_obj.login(os.getenv('EMAIL_FROM'), os.getenv('SMTP_PASSWORD'))
+    smtp_obj = smtplib.SMTP_SSL(SMTP_SERVER, SMTP_PORT)
+    smtp_obj.login(EMAIL_FROM, SMTP_PASSWORD)
     smtp_obj.sendmail(msg['From'], msg['To'], msg.as_string())
     smtp_obj.quit()
