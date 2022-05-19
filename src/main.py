@@ -13,7 +13,7 @@ executors = {
 scheduler = BackgroundScheduler(daemon=False, executors=executors)
 
 if __name__ == '__main__':
-    logging.info('Starting Main')
+    logging.debug('Starting Main')
     scheduler.start()
 
     #Broadcast bans to #bot-graveyard on Discord, send total bans tweet, and send bans breakdowns tweets
