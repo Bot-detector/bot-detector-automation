@@ -22,7 +22,7 @@ def get_tipoff_data():
         database=config.DATABASE,
     )
     cursor = connection.cursor()
-    cursor.execute(config.TIPOFF_CONFIG)
+    cursor.execute(TIPOFF_CONFIG)
     df = pd.DataFrame(
         [tuple(row) for row in cursor.fetchall()],
         columns=[desc[0] for desc in cursor.description],
