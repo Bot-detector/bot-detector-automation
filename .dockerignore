@@ -1,4 +1,7 @@
+.git
 .github/
 .gitignore
-
 .env-example
+.vscode
+LICENSE
+*.md
