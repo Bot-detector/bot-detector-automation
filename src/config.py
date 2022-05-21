@@ -2,6 +2,9 @@ import os
 
 from dotenv import find_dotenv, load_dotenv
 
+
+# env load
+
 load_dotenv(find_dotenv(), verbose=True)
 
 EMAIL_FROM = os.getenv("EMAIL_FROM")

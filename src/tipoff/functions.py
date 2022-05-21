@@ -6,9 +6,9 @@ from email.mime.text import MIMEText
 
 import pandas as pd
 import pymysql
-import config
+import src.config as config
 
-from tipoff.queries import *
+from src.tipoff.queries import *
 
 logger = logging.getLogger(__name__)
 

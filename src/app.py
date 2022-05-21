@@ -1,6 +1,41 @@
+from unittest import FunctionTestCase
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
+import src.banbroadcaster.main_broadcaster as banbroadcaster
+import src.tipoff.main_tipoff as tipoff
 
 app = FastAPI()
+origins = [
+    "http://osrsbotdetector.com/",
+    "https://osrsbotdetector.com/",
+    "http://localhost",
+    "http://localhost:8080",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
+def output_handler(function=None):
+    """Handles errors for POST routes
+
+    Args:
+        function (python functoin): python function object. Defaults to None.
+
+    Returns:
+        dictionary: {'message'}:{'error'|'ok'}
+    """
+    try:
+        function()
+    except:
+        return {"message": "error"}
+    return {"message": "ok"}
 
 
 @app.get("/", tags=["Home"])
@@ -16,34 +51,23 @@ async def root():
     return welcome_message
 
 
-@app.get("/status", tags=["Health"])
-async def status(token: str):
-    """
-    Outputs a general access and usage status for the API.
-    This can be useful to determine if a route has been delayed by a period of time, or if the routes are alive and healthy.
-    """
-    return {"message": "#TBD"}
-
-
 @app.post("/tipoff/tipoff-bots", tags=["Tipoff"])
 async def tipoff_bots(token: str):
-    """
-    Sends a tipoff email to JaGex, requires higher-level access to send data over.
-    """
-    return {"message": "#TBD"}
+    """Sends a tipoff email to JaGex, requires higher-level access to send data over."""
+    return output_handler(function=tipoff.tipoff_bots)
 
 
-@app.post("/broadcast/tweet_bans", tags=["Broadcast", "Twitter"])
-async def tweet_bans(token: str):
-    """
-    Tweets out bans to the official twitter: @Osrsbotdetector.
-    """
-    return {"message": "#TBD"}
+@app.post("/broadcast/broadcast-bans", tags=["Broadcast"])
+async def discord_bans(
+    token: str,
+    Twitter: bool = True,
+    Discord: bool = True,
+):
+    """Sends a discord and/or twitter ban output to the relevant channels."""
 
+    if (Twitter and Discord) == False:
+        return {"message": "You must select one ban output path."}
 
-@app.post("/broadcast/discord_bans", tags=["Broadcast", "Discord"])
-async def discord_bans(token: str):
-    """
-    Sends a discord ban update into the relevant channel.
-    """
-    return {"message": "#TBD"}
+    return output_handler(
+        function=banbroadcaster.broadcast_bans(Twitter=Twitter, Discord=Discord)
+    )
