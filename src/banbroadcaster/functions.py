@@ -5,13 +5,12 @@ from collections import namedtuple
 from datetime import date, datetime
 from typing import List, NamedTuple
 
-import config
 import mysql.connector
+import src.config as config
 import tweepy
 from discord_webhook import DiscordWebhook
 from discord_webhook.webhook import DiscordEmbed
-
-from banbroadcaster.queries import *
+from src.banbroadcaster.queries import *
 
 logger = logging.getLogger(__name__)
 

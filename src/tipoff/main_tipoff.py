@@ -3,9 +3,8 @@ import os
 from datetime import date
 from typing import List
 
-import config
-
-import tipoff.functions as functions
+import src.config as config
+import src.tipoff.functions as functions
 
 logger = logging.getLogger(__name__)
 

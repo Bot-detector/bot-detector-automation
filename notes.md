@@ -20,3 +20,16 @@ call pip install -r requirements.txt --upgrade
 call pip freeze > requirements.txt
 powershell "(Get-Content requirements.txt) | ForEach-Object { $_ -replace '>=', '==' } | Set-Content requirements.txt"
 ```
+
+# api documentation
+```
+http://127.0.0.1:5000/docs
+http://127.0.0.1:5000/redoc
+```
+# extra info
+```
+POST: to create data.
+GET: to read data.
+PUT: to update data.
+DELETE: to delete data.
+```
