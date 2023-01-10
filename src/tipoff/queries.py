@@ -12,6 +12,7 @@ TIPOFF_CONFIG = '''
     INNER JOIN regionIDNames as rid on rid.region_ID = rp.region_ID
     WHERE 1=1
         and p.Predicted_confidence > 99
+        and p.Real_Player < 10
         and pl.label_jagex = 0
         and p.prediction not in (
             'Real_Player',
