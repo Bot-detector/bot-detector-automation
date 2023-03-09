@@ -35,5 +35,7 @@ if __name__ == "__main__":
         misfire_grace_time=60,
     )
 
+    # broadcaster.broadcast_bans()
+    # tip_off.tipoff_bots()
     while True:
         pass

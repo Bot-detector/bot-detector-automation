@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 
 def get_tipoff_data():
-    logger.info("Getting tipoff information")
+    logger.debug("Getting tipoff information")
     connection = pymysql.connect(
         host=config.SERVER_ADDRESS,
         user=config.SERVER_LOGIN,
@@ -33,7 +33,7 @@ def get_tipoff_data():
 
 
 def send_tipoff(MESSAGE_BODY, EMAIL_SUBJECT, PATH_TO_CSV_FILE, FILE_NAME):
-    logger.info("Sending Tipoff")
+    logger.debug("Sending Tipoff")
     msg = MIMEMultipart()
     body_part = MIMEText(MESSAGE_BODY, "plain")
 

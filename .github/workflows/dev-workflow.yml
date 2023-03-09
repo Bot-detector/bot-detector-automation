@@ -27,6 +27,7 @@ jobs:
           echo "${{secrets.BEARER_TOKEN}}" >> .env
           echo "${{secrets.ACCESS_TOKEN}}" >> .env
           echo "${{secrets.ACCESS_TOKEN_SECRET}}" >> .env
+          echo "${{secrets.PATRON_WEBHOOK}}" >> .env
 
     - name: Build the Docker image
       run: docker build . --file Dockerfile -t bot-detector/bd-automations:latest

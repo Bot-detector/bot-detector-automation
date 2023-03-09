@@ -1,0 +1,9 @@
+version: '3'
+services:
+  automation:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: bd-automation
+    env_file:
+      - .env
