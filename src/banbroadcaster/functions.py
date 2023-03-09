@@ -55,11 +55,13 @@ def get_ban_counts():
     total_pending_bans = execute_sql(sql=sql_get_count_banned_players)[0].bans
     real_player_bans = execute_sql(sql=sql_get_count_banned_real_players)[0].real_bans
     no_data_bans = execute_sql(sql=sql_get_count_banned_no_data)[0].no_data_bans
+
     try:
         bot_records = execute_sql(sql=sql_get_banned_bots_names)
         banned_bot_names = [record.name for record in bot_records]
         banned_bot_predictions = [record.prediction for record in bot_records]
-    except IndexError:
+    except IndexError as e:
+        logger.error(str(e))
         banned_bot_names = []
         banned_bot_predictions = []
 
@@ -135,7 +137,7 @@ def broadcast_totals(
 
 def broadcast_names(names_list: List[str]):
 
-    logger.info("Broadcasting Names")
+    logger.debug("Broadcasting Names")
     while True:
         num_pending_players = len(names_list)
         # if is empty list break
@@ -172,14 +174,14 @@ def broadcast_names(names_list: List[str]):
 
 
 def post_bans_tweet(num_bans: int):
-    logger.info("Posting Ban Tweet")
+    logger.debug("Posting Ban Tweet")
     msg = f"BANS ALERT - {datetime.now().strftime('%d-%m-%Y')}: {num_bans:,d} accounts our system has detected as bots have been banned in the past 24 hours."
     TWITTER_API.update_status(msg)
 
 
 def post_breakdown_tweets(predictions: List[str]):
 
-    logger.info("Posting Breakdown Tweet")
+    logger.debug("Posting Breakdown Tweet")
     tweets = generate_breakdown_tweets(predictions)
 
     if len(tweets) == 0:
@@ -228,7 +230,7 @@ def generate_breakdown_tweets(predictions: List[str]):
 
 def group_predictions(predictions: List[str]):
 
-    logger.info("Grouping Predictions")
+    logger.debug("Grouping Predictions")
     grouped = {}
 
     for p in predictions:

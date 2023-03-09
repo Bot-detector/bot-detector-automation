@@ -1,7 +1,10 @@
 import banbroadcaster.functions
+import logging
 
+logger = logging.getLogger(__name__)
 
 def broadcast_bans():
+    logger.debug("get_ban_counts")
     (
         total_pending_bans,
         real_player_bans,
@@ -9,8 +12,14 @@ def broadcast_bans():
         banned_bot_names,
         banned_bot_predictions,
     ) = banbroadcaster.functions.get_ban_counts()
+
+    
     num_bots_banned = len(banned_bot_names)
 
+    logger.debug("apply_bot_bans")
+    banbroadcaster.functions.apply_bot_bans()
+
+    logger.debug("broadcast_totals")
     banbroadcaster.functions.broadcast_totals(
         total_bans=total_pending_bans,
         real_player_bans=real_player_bans,
@@ -18,8 +27,14 @@ def broadcast_bans():
         bot_bans=num_bots_banned,
     )
 
+    logger.debug("broadcast_names")
     banbroadcaster.functions.broadcast_names(names_list=banned_bot_names)
-    banbroadcaster.functions.apply_bot_bans()
+    logger.debug("broadcast_bans_complete")
     banbroadcaster.functions.broadcast_bans_complete(num_bans=num_bots_banned)
+    logger.debug("post_bans_tweet")
     banbroadcaster.functions.post_bans_tweet(num_bans=num_bots_banned)
+    logger.debug("post_breakdown_tweets")
     banbroadcaster.functions.post_breakdown_tweets(banned_bot_predictions)
+
+if __name__ == "__main__":
+    broadcast_bans()
