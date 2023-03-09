@@ -35,6 +35,5 @@ if __name__ == "__main__":
         misfire_grace_time=60,
     )
 
-    broadcaster.broadcast_bans()
     while True:
         pass
