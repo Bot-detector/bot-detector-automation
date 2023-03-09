@@ -1,16 +1,15 @@
-
 name: Development workflow
 on:
   push:
-    branches: [ develop ]
+    branches: [develop]
 
 jobs:
   setup:
     runs-on: self-hosted
     steps:
-    - uses: actions/checkout@v2
-    - name: Set Up ENV
-      run: |
+      - uses: actions/checkout@v2
+      - name: Set Up ENV
+        run: |
           echo "${{secrets.EMAIL_FROM}}" > .env
           echo "${{secrets.EMAIL_TIPOFF}}" >> .env
           echo "${{secrets.SMTP_PASSWORD}}" >> .env
@@ -29,20 +28,28 @@ jobs:
           echo "${{secrets.ACCESS_TOKEN_SECRET}}" >> .env
           echo "${{secrets.PATRON_WEBHOOK}}" >> .env
 
-    - name: Build the Docker image
-      run: docker build . --file Dockerfile -t bot-detector/bd-automations:latest
+  build-image:
+    needs: setup
+    runs-on: self-hosted
+    steps:
+      - name: Build the Docker image
+        run: docker build . --file Dockerfile -t bot-detector/bd-automations:latest
 
-    - name: Tag Image
-      run: docker tag bot-detector/bd-automations:latest hub.osrsbotdetector.com/bot-detector/bd-automations:latest
-      
-    - name: Login to Docker Registry
-      run: echo "${{ secrets.DOCKER_REGISTRY_PASSWORD }}" | docker login https://hub.osrsbotdetector.com -u "${{ secrets.DOCKER_REGISTRY_USERNAME }}" --password-stdin
+      - name: Tag Image
+        run: docker tag bot-detector/bd-automations:latest hub.osrsbotdetector.com/bot-detector/bd-automations:latest
 
-    - name: Push Image to Registry
-      run: docker push hub.osrsbotdetector.com/bot-detector/bd-automations:latest
+      - name: Login to Docker Registry
+        run: echo "${{ secrets.DOCKER_REGISTRY_PASSWORD }}" | docker login https://hub.osrsbotdetector.com -u "${{ secrets.DOCKER_REGISTRY_USERNAME }}" --password-stdin
 
-    - name: Apply Possible Deployment Changes
-      run: kubectl apply -f deployment.yaml
+      - name: Push Image to Registry
+        run: docker push hub.osrsbotdetector.com/bot-detector/bd-automations:latest
 
-    - name: Restart Deployment for Possible Container Changes
-      run: kubectl rollout restart deploy bd-automations
+  deploy:
+    needs: build-image
+    runs-on: self-hosted
+    steps:
+      - name: Apply Possible Deployment Changes
+        run: kubectl apply -f deployment.yaml
+
+      - name: Restart Deployment for Possible Container Changes
+        run: kubectl rollout restart deploy bd-automations
