@@ -10,23 +10,23 @@ jobs:
       - uses: actions/checkout@v2
       - name: Set Up ENV
         run: |
-          echo "${{secrets.EMAIL_FROM}}" > .env
-          echo "${{secrets.EMAIL_TIPOFF}}" >> .env
-          echo "${{secrets.SMTP_PASSWORD}}" >> .env
-          echo "${{secrets.SMTP_PORT}}" >> .env
-          echo "${{secrets.SMTP_SERVER}}" >> .env
-          echo "${{secrets.JMOD_TAG}}" >> .env
-          echo "${{secrets.SERVER_LOGIN}}" >> .env
-          echo "${{secrets.SERVER_PASSWORD}}" >> .env
-          echo "${{secrets.DATABASE}}" >> .env
-          echo "${{secrets.SERVER_ADDRESS}}" >> .env
-          echo "${{secrets.GRAVEYARD_WEBHOOK}}" >> .env
-          echo "${{secrets.CONSUMER_KEY}}" >> .env
-          echo "${{secrets.CONSUMER_SECRET}}" >> .env
-          echo "${{secrets.BEARER_TOKEN}}" >> .env
-          echo "${{secrets.ACCESS_TOKEN}}" >> .env
-          echo "${{secrets.ACCESS_TOKEN_SECRET}}" >> .env
-          echo "${{secrets.PATRON_WEBHOOK}}" >> .env
+          echo "${{secrets.EMAIL_FROM}}" > ./src/.env
+          echo "${{secrets.EMAIL_TIPOFF}}" >> ./src/.env
+          echo "${{secrets.SMTP_PASSWORD}}" >> ./src/.env
+          echo "${{secrets.SMTP_PORT}}" >> ./src/.env
+          echo "${{secrets.SMTP_SERVER}}" >> ./src/.env
+          echo "${{secrets.JMOD_TAG}}" >> ./src/.env
+          echo "${{secrets.SERVER_LOGIN}}" >> ./src/.env
+          echo "${{secrets.SERVER_PASSWORD}}" >> ./src/.env
+          echo "${{secrets.DATABASE}}" >> ./src/.env
+          echo "${{secrets.SERVER_ADDRESS}}" >> ./src/.env
+          echo "${{secrets.GRAVEYARD_WEBHOOK}}" >> ./src/.env
+          echo "${{secrets.CONSUMER_KEY}}" >> ./src/.env
+          echo "${{secrets.CONSUMER_SECRET}}" >> ./src/.env
+          echo "${{secrets.BEARER_TOKEN}}" >> ./src/.env
+          echo "${{secrets.ACCESS_TOKEN}}" >> ./src/.env
+          echo "${{secrets.ACCESS_TOKEN_SECRET}}" >> ./src/.env
+          echo "${{secrets.PATRON_WEBHOOK}}" >> ./src/.env
 
   build-image:
     needs: setup
