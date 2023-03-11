@@ -62,7 +62,7 @@ jobs:
           branch: "${{ steps.vars.outputs.GIT_HASH }}"
           targetBranch: develop
           masterBranchName: develop
-          createPR: false
+          createPR: true
           changes: |
             {
               "spec.template.spec.containers[0].image":"${{ steps.vars.outputs.REGISTRY }}:${{ steps.vars.outputs.GIT_HASH }}"
