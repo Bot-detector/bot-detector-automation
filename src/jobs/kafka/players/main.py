@@ -103,12 +103,15 @@ async def async_main():
                     row["updated_at"] = row["updated_at"].strftime("%Y-%m-%d %H:%M:%S")
 
                 row = Player(**row)
+                
 
                 if row.id not in unique_ids:
                     _rows.append(row)
-                    unique_ids.append(row.id)
                     # Add unique IDs to the list
+                    unique_ids.append(row.id)
+                    
 
+            logger.info(f"{_rows[0]=}")
             logger.debug(f"{len(unique_ids)=}, {offset=}")
 
             # Send rows to Kafka
