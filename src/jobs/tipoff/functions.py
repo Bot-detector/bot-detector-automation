@@ -6,9 +6,8 @@ from email.mime.text import MIMEText
 
 import pandas as pd
 import pymysql
-import config
-
-from tipoff.queries import *
+from config import config
+from . import queries
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +21,7 @@ def get_tipoff_data():
         database=config.DATABASE,
     )
     cursor = connection.cursor()
-    cursor.execute(TIPOFF_CONFIG)
+    cursor.execute(queries.TIPOFF_CONFIG)
     df = pd.DataFrame(
         [tuple(row) for row in cursor.fetchall()],
         columns=[desc[0] for desc in cursor.description],

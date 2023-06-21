@@ -2,16 +2,16 @@ import logging
 import operator
 import time
 from collections import namedtuple
-from datetime import date, datetime
-from typing import List, NamedTuple
+from datetime import  datetime
+from typing import List
 
-import config
+from config import config
 import mysql.connector
 import tweepy
 from discord_webhook import DiscordWebhook
 from discord_webhook.webhook import DiscordEmbed
 
-from banbroadcaster.queries import *
+from . import queries
 
 logger = logging.getLogger(__name__)
 
@@ -52,12 +52,12 @@ def execute_sql(sql: str, insert: bool = False, param: dict = None):
 
 
 def get_ban_counts():
-    total_pending_bans = execute_sql(sql=sql_get_count_banned_players)[0].bans
-    real_player_bans = execute_sql(sql=sql_get_count_banned_real_players)[0].real_bans
-    no_data_bans = execute_sql(sql=sql_get_count_banned_no_data)[0].no_data_bans
+    total_pending_bans = execute_sql(sql=queries.sql_get_count_banned_players)[0].bans
+    real_player_bans = execute_sql(sql=queries.sql_get_count_banned_real_players)[0].real_bans
+    no_data_bans = execute_sql(sql=queries.sql_get_count_banned_no_data)[0].no_data_bans
 
     try:
-        bot_records = execute_sql(sql=sql_get_banned_bots_names)
+        bot_records = execute_sql(sql=queries.sql_get_banned_bots_names)
         banned_bot_names = [record.name for record in bot_records]
         banned_bot_predictions = [record.prediction for record in bot_records]
     except IndexError as e:
@@ -75,7 +75,7 @@ def get_ban_counts():
 
 
 def apply_bot_bans():
-    execute_sql(sql=sql_apply_bot_bans, insert=True)
+    execute_sql(sql=queries.sql_apply_bot_bans, insert=True)
     return
 
 

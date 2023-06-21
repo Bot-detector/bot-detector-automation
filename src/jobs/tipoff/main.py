@@ -8,8 +8,9 @@ from discord_webhook import DiscordWebhook
 from discord import SyncWebhook, File
 import requests
 
-import config
-import tipoff.functions as functions
+from config import config
+
+from . import functions
 
 logger = logging.getLogger(__name__)
 
