@@ -110,7 +110,9 @@ async def async_main():
                     # Add unique IDs to the list
                     unique_ids.append(row.id)
                     
-
+            if not _rows:
+                continue
+            
             logger.info(f"{_rows[0]=}")
             logger.debug(f"{len(unique_ids)=}, {offset=}")
 
