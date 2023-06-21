@@ -80,7 +80,8 @@ async def async_main():
 
             # If no more rows are fetched, break out of the loop
             if len(rows) == 0:
-                break
+                await asyncio.sleep(300)
+                continue
 
             if datetime.now().strftime("%Y-%m-%d") > today:
                 logger.debug("new day")
