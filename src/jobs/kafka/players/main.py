@@ -109,7 +109,7 @@ async def async_main():
                     unique_ids.append(row.id)
                     # Add unique IDs to the list
 
-            logger.debug(f"{len(unique_ids)}")
+            logger.debug(f"{len(unique_ids)=}, {offset=}")
 
             # Send rows to Kafka
             await send_rows_to_kafka(_rows, kafka_topic="player")
