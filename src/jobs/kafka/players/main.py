@@ -11,6 +11,7 @@ from config import config
 
 from . import queries
 import logging
+import sys
 
 logger = logging.getLogger(__name__)
 APPCONFIG = config.AppConfig()
@@ -68,9 +69,11 @@ async def async_main():
 
             # Create a SQLAlchemy text object from the batch SQL query
             statement = sqlalchemy.text(batch_sql)
-
-            # Execute the batch SQL query and fetch all rows
-            result = connection.execute(statement)
+            try:
+                # Execute the batch SQL query and fetch all rows
+                result = connection.execute(statement)
+            except:
+                sys.exit()
 
             # Fetch the column names from the result
             column_names = result.keys()
@@ -80,6 +83,7 @@ async def async_main():
 
             # If no more rows are fetched, break out of the loop
             if len(rows) == 0:
+                offset = 0
                 await asyncio.sleep(300)
                 continue
 

@@ -37,6 +37,7 @@ select * from (
         LEFT JOIN reportLatest rpl ON (pl.id = rpl.reported_id)
         where 1=1
             and LENGTH(pl.name) <= 12
+            and date(pl.updated_at) <> curdate()
     ) pl
     ORDER BY pl.scrape_priority
 ) a
