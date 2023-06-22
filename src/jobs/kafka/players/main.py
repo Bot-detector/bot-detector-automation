@@ -54,78 +54,76 @@ async def async_main(unique_ids: list = []):
     APPCONFIG = config.AppConfig()
     connection_string = f"mysql+pymysql://{APPCONFIG.SERVER_LOGIN}:{APPCONFIG.SERVER_PASSWORD}@{APPCONFIG.SERVER_ADDRESS}/{APPCONFIG.DATABASE}"
 
-    # Create an engine
-    engine = sqlalchemy.create_engine(connection_string)
-
     # Execute the SQL query in batches of size 10,000
     batch_size: int = 5000
     offset: int = 0
     today = datetime.now().strftime("%Y-%m-%d")
 
-    with engine.connect() as connection:
-        while True:
-            # Construct the SQL query with the batch size and offset
-            batch_sql: str = f"{queries.sql} LIMIT {batch_size} OFFSET {offset};"
+    # indent hell
+    while True:
+        try:
+            logger.info("Creating database engine")
+            # Create an engine and establish the connection
+            engine = sqlalchemy.create_engine(connection_string)
+            with engine.connect() as connection:
+                while True:
+                    # Construct the SQL query with the batch size and offset
+                    batch_sql: str = (
+                        f"{queries.sql} LIMIT {batch_size} OFFSET {offset};"
+                    )
 
-            # Create a SQLAlchemy text object from the batch SQL query
-            statement = sqlalchemy.text(batch_sql)
-            try:
-                # Execute the batch SQL query and fetch all rows
-                result = connection.execute(statement)
-            except OperationalError as e:
-                logger.error(f"exception {str(e)}")
-                asyncio.ensure_future(async_main(unique_ids=unique_ids))
-                return
+                    # Create a SQLAlchemy text object from the batch SQL query
+                    statement = sqlalchemy.text(batch_sql)
 
-            # Fetch the column names from the result
-            column_names = result.keys()
+                    # Execute the batch SQL query
+                    result = connection.execute(statement)
 
-            # Convert rows to dictionaries
-            rows = [dict(zip(column_names, row)) for row in result.fetchall()]
+                    # Fetch the column names from the result
+                    column_names = result.keys()
+                    result = result.fetchall()
 
-            # If no more rows are fetched, break out of the loop
-            if len(rows) == 0:
-                offset = 0
-                await asyncio.sleep(300)
-                continue
+                    # Iterate over the result set and convert rows to dictionaries
+                    rows = []
+                    for row in result:
+                        row = dict(zip(column_names, row))
 
-            if datetime.now().strftime("%Y-%m-%d") > today:
-                logger.debug("new day")
-                today = datetime.now().strftime("%Y-%m-%d")
-                unique_ids = []
+                        if row["created_at"]:
+                            row["created_at"] = row["created_at"].strftime(
+                                "%Y-%m-%d %H:%M:%S"
+                            )
 
-            _rows = list()
-            for row in rows:
-                # parse datetime to string
-                if row["created_at"]:
-                    row["created_at"] = row["created_at"].strftime("%Y-%m-%d %H:%M:%S")
+                        if row["updated_at"]:
+                            if row["updated_at"].strftime("%Y-%m-%d") == today:
+                                continue
+                            row["updated_at"] = row["updated_at"].strftime(
+                                "%Y-%m-%d %H:%M:%S"
+                            )
 
-                # parse datetime to string
-                if row["updated_at"]:
-                    # ignore players that we have updated
+                        row = Player(**row)
 
-                    if row["updated_at"].strftime("%Y-%m-%d") == today:
+                        if row.id not in unique_ids:
+                            rows.append(row)
+                            # Add unique IDs to the list
+                            unique_ids.append(row.id)
+
+                    if not rows:
                         continue
-                    row["updated_at"] = row["updated_at"].strftime("%Y-%m-%d %H:%M:%S")
 
-                row = Player(**row)
+                    logger.debug(f"{len(unique_ids)=}, {offset=}")
 
-                if row.id not in unique_ids:
-                    _rows.append(row)
-                    # Add unique IDs to the list
-                    unique_ids.append(row.id)
+                    # Send rows to Kafka
+                    await send_rows_to_kafka(rows, kafka_topic="player")
 
-            if not _rows:
-                continue
+                    # Increment the offset for the next batch
+                    offset += batch_size
 
-            logger.info(f"{_rows[0]=}")
-            logger.debug(f"{len(unique_ids)=}, {offset=}")
+        except OperationalError as e:
+            logger.error(f"exception {str(e)}")
 
-            # Send rows to Kafka
-            await send_rows_to_kafka(_rows, kafka_topic="player")
-
-            # Increment the offset for the next batch
-            offset += batch_size
+            # reset offset
+            offset = 0
+            await asyncio.sleep(60)
+            
 
 
 def get_players_to_scrape():
