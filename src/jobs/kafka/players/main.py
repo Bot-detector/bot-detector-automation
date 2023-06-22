@@ -49,7 +49,7 @@ async def send_rows_to_kafka(rows: list[Player], kafka_topic: str):
         await producer.stop()
 
 
-async def async_main():
+async def async_main(unique_ids: list = []):
     APPCONFIG = config.AppConfig()
     connection_string = f"mysql+pymysql://{APPCONFIG.SERVER_LOGIN}:{APPCONFIG.SERVER_PASSWORD}@{APPCONFIG.SERVER_ADDRESS}/{APPCONFIG.DATABASE}"
 
@@ -59,7 +59,6 @@ async def async_main():
     # Execute the SQL query in batches of size 10,000
     batch_size: int = 5000
     offset: int = 0
-    unique_ids = []
     today = datetime.now().strftime("%Y-%m-%d")
 
     with engine.connect() as connection:
@@ -74,8 +73,8 @@ async def async_main():
                 result = connection.execute(statement)
             except:
                 logger.error("exception")
-                offset = 0
-                continue
+                await async_main(unique_ids=unique_ids)
+                return
 
             # Fetch the column names from the result
             column_names = result.keys()
@@ -103,22 +102,21 @@ async def async_main():
                 # parse datetime to string
                 if row["updated_at"]:
                     # ignore players that we have updated
-                    
+
                     if row["updated_at"].strftime("%Y-%m-%d") == today:
                         continue
                     row["updated_at"] = row["updated_at"].strftime("%Y-%m-%d %H:%M:%S")
 
                 row = Player(**row)
-                
 
                 if row.id not in unique_ids:
                     _rows.append(row)
                     # Add unique IDs to the list
                     unique_ids.append(row.id)
-                    
+
             if not _rows:
                 continue
-            
+
             logger.info(f"{_rows[0]=}")
             logger.debug(f"{len(unique_ids)=}, {offset=}")
 
