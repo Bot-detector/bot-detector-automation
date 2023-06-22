@@ -73,7 +73,9 @@ async def async_main():
                 # Execute the batch SQL query and fetch all rows
                 result = connection.execute(statement)
             except:
-                sys.exit()
+                logger.error("exception")
+                offset = 0
+                continue
 
             # Fetch the column names from the result
             column_names = result.keys()
