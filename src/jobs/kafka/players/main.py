@@ -12,6 +12,7 @@ from config import config
 from . import queries
 import logging
 import sys
+from sqlalchemy.exc import OperationalError
 
 logger = logging.getLogger(__name__)
 APPCONFIG = config.AppConfig()
@@ -71,9 +72,9 @@ async def async_main(unique_ids: list = []):
             try:
                 # Execute the batch SQL query and fetch all rows
                 result = connection.execute(statement)
-            except:
-                logger.error("exception")
-                await async_main(unique_ids=unique_ids)
+            except OperationalError as e:
+                logger.error(f"exception {str(e)}")
+                asyncio.ensure_future(async_main(unique_ids=unique_ids))
                 return
 
             # Fetch the column names from the result
