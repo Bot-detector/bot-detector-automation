@@ -112,6 +112,7 @@ async def async_main():
             logger.error(f"exception {str(e)}")
             offset = 0
             await asyncio.sleep(60)
+            engine = sqlalchemy.create_engine(connection_string)
             continue
 
         rows, unique_ids = process_rows(result, unique_ids, columns)
@@ -129,7 +130,9 @@ async def async_main():
 
         # Increment the offset for the next batch
         offset += batch_size
-
+        
+        if offset > 100_000:
+            offset = 0
 
 def get_players_to_scrape():
     asyncio.ensure_future(async_main())
