@@ -120,12 +120,15 @@ async def async_main():
             await asyncio.sleep(60)
             continue
         
+        if not result:
+            offset = 0
+            await asyncio.sleep(60)
+            continue
+
         rows, unique_ids = process_rows(result, unique_ids, columns)
 
         if not rows:
             logger.error(f"no unique rows")
-            offset = 0
-            await asyncio.sleep(60)
             continue
 
         logger.debug(f"{len(unique_ids)=}, {offset=}")
