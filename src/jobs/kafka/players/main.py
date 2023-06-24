@@ -98,27 +98,32 @@ async def async_main():
     offset: int = 0
     unique_ids: list = []
 
-    logger.info("Creating database engine")
-
-    # Create an engine and establish the connection
-    engine = sqlalchemy.create_engine(connection_string)
+    logger.info("start getting data")
+    _last_day = datetime.now().strftime("%Y-%m-%d")
 
     while True:
+        # reset on new day
+        if _last_day != datetime.now().strftime("%Y-%m-%d"):
+            _last_day = datetime.now().strftime("%Y-%m-%d")
+            unique_ids = []
+            offset = 0
+
         # Construct the SQL query with the batch size and offset
         query: str = f"{queries.sql} LIMIT {batch_size} OFFSET {offset};"
         try:
+            # Create an engine and establish the connection
+            engine = sqlalchemy.create_engine(connection_string)
             columns, result = get_data(query, engine)
         except Exception as e:
             logger.error(f"exception {str(e)}")
             offset = 0
             await asyncio.sleep(60)
-            engine = sqlalchemy.create_engine(connection_string)
             continue
-
+        
         rows, unique_ids = process_rows(result, unique_ids, columns)
 
         if not rows:
-            logger.error(f"no rows")
+            logger.error(f"no unique rows")
             offset = 0
             await asyncio.sleep(60)
             continue
