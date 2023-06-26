@@ -38,9 +38,8 @@ async def get_data() -> list[Player]:
     """
     This method is used to get the players to scrape from the api.
     """
-    batch_size: int = 5000
     url = (
-        f"{APPCONFIG.ENDPOINT}/v1/scraper/players/0/{batch_size}/{APPCONFIG.API_TOKEN}"
+        f"{APPCONFIG.ENDPOINT}/v1/scraper/players/0/{APPCONFIG.BATCH_SIZE}/{APPCONFIG.API_TOKEN}"
     )
     logger.info("fetching players to scrape")
     async with aiohttp.ClientSession() as session:
@@ -82,9 +81,6 @@ def process_rows(result: list[Player], unique_ids: list):
 
 
 async def async_main():
-    # Execute the SQL query in batches of size 10,000
-    batch_size: int = 5000
-    offset: int = 0
     unique_ids: list = []
 
     logger.info("start getting data")
@@ -97,7 +93,6 @@ async def async_main():
             logger.info("new day!")
             _last_day = today
             unique_ids = []
-            offset = 0
 
         result = await get_data()
 
@@ -130,12 +125,6 @@ async def async_main():
 
         # Send rows to Kafka
         await send_rows_to_kafka(rows, kafka_topic="player")
-
-        # Increment the offset for the next batch
-        offset += batch_size
-
-        if offset > 100_000:
-            offset = 0
 
 
 def get_players_to_scrape():

@@ -11,9 +11,10 @@ class AppConfig(BaseSettings):
     DATABASE:str
     
     KAFKA_HOST:str
-    
+
     ENDPOINT:str
     API_TOKEN:str
+    BATCH_SIZE:int = 10_000
 
 EMAIL_FROM = os.getenv("EMAIL_FROM")
 EMAIL_TIPOFF = os.getenv("EMAIL_TIPOFF")
