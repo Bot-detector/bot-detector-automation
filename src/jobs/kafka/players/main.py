@@ -107,18 +107,21 @@ async def async_main():
             continue
 
         rows = []
+
         for row in result:
             if row.id in unique_ids:
                 continue
-
-            _updated_at = datetime.fromisoformat(row.updated_at)
-            _updated_at = _updated_at.strftime("%Y-%m-%d")
-            if _updated_at == today:
-                logger.debug(f"already scraped today {row}")
-                continue
+            
+            if not row.updated_at is None:
+                _updated_at = datetime.fromisoformat(row.updated_at)
+                _updated_at = _updated_at.strftime("%Y-%m-%d")
+                if _updated_at == today:
+                    logger.debug(f"already scraped today {row}")
+                    continue
 
             unique_ids.append(row.id)
             rows.append(row)
+
 
         if not rows:
             logger.error(f"no unique rows")
