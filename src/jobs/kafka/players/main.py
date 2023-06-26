@@ -13,6 +13,7 @@ from config import config
 logger = logging.getLogger(__name__)
 APPCONFIG = config.AppConfig()
 
+
 async def send_rows_to_kafka(rows: list[Player], kafka_topic: str):
     # Create Kafka producer
     producer = aiokafka.AIOKafkaProducer(
@@ -91,9 +92,10 @@ async def async_main():
 
     while True:
         # reset on new day
-        if _last_day != datetime.now().strftime("%Y-%m-%d"):
+        today = datetime.now().strftime("%Y-%m-%d")
+        if _last_day != today:
             logger.info("new day!")
-            _last_day = datetime.now().strftime("%Y-%m-%d")
+            _last_day = today
             unique_ids = []
             offset = 0
 
@@ -108,6 +110,13 @@ async def async_main():
         for row in result:
             if row.id in unique_ids:
                 continue
+
+            _updated_at = datetime.fromisoformat(row.updated_at)
+            _updated_at = _updated_at.strftime("%Y-%m-%d")
+            if _updated_at == today:
+                logger.debug(f"already scraped today {row}")
+                continue
+
             unique_ids.append(row.id)
             rows.append(row)
 
