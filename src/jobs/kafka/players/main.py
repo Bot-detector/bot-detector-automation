@@ -1,35 +1,17 @@
 import asyncio
 import json
+import logging
 from datetime import datetime
 
+import aiohttp
 import aiokafka
-import sqlalchemy
-from pydantic import BaseModel
 
+from .models import Player
 import config
 from config import config
 
-from . import queries
-import logging
-import sys
-from sqlalchemy.exc import OperationalError
-from sqlalchemy import Engine
-
 logger = logging.getLogger(__name__)
 APPCONFIG = config.AppConfig()
-
-
-class Player(BaseModel):
-    id: int
-    name: str
-    created_at: str
-    updated_at: str | None
-    possible_ban: int
-    confirmed_ban: int
-    confirmed_player: int
-    label_id: int
-    label_jagex: int
-
 
 async def send_rows_to_kafka(rows: list[Player], kafka_topic: str):
     # Create Kafka producer
@@ -51,27 +33,36 @@ async def send_rows_to_kafka(rows: list[Player], kafka_topic: str):
         await producer.stop()
 
 
-def get_data(query: str, engine: Engine):
-    with engine.connect() as connection:
-        # Create a SQLAlchemy text object from the batch SQL query
-        statement = sqlalchemy.text(query)
+async def get_data() -> list[Player]:
+    """
+    This method is used to get the players to scrape from the api.
+    """
+    batch_size: int = 5000
+    url = (
+        f"{APPCONFIG.ENDPOINT}/v1/scraper/players/0/{batch_size}/{APPCONFIG.API_TOKEN}"
+    )
+    logger.info("fetching players to scrape")
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url) as response:
+            if response.status != 200:
+                logger.error(
+                    f"response status {response.status}"
+                    f"response body: {await response.text()}"
+                )
+                raise Exception("error fetching players")
+            players = await response.json()
+    logger.info(f"fetched {len(players)} players")
+    players = [Player(**player) for player in players]
+    return players
 
-        # Execute the batch SQL query
-        result = connection.execute(statement)
 
-        # Fetch the column names from the result
-        columns = result.keys()
-        result = result.fetchall()
-    return columns, result
-
-
-def process_rows(result, unique_ids: list, columns: list):
+def process_rows(result: list[Player], unique_ids: list):
     today = datetime.now().strftime("%Y-%m-%d")
-    # Iterate over the result set and convert rows to dictionaries
+
     rows = []
     for row in result:
-        row = dict(zip(columns, row))
-
+        if row.created_at:
+            row.created_at
         if row["created_at"]:
             row["created_at"] = row["created_at"].strftime("%Y-%m-%d %H:%M:%S")
 
@@ -90,9 +81,6 @@ def process_rows(result, unique_ids: list, columns: list):
 
 
 async def async_main():
-    APPCONFIG = config.AppConfig()
-    connection_string = f"mysql+pymysql://{APPCONFIG.SERVER_LOGIN}:{APPCONFIG.SERVER_PASSWORD}@{APPCONFIG.SERVER_ADDRESS}/{APPCONFIG.DATABASE}"
-
     # Execute the SQL query in batches of size 10,000
     batch_size: int = 5000
     offset: int = 0
@@ -104,43 +92,39 @@ async def async_main():
     while True:
         # reset on new day
         if _last_day != datetime.now().strftime("%Y-%m-%d"):
+            logger.info("new day!")
             _last_day = datetime.now().strftime("%Y-%m-%d")
             unique_ids = []
             offset = 0
 
-        # Construct the SQL query with the batch size and offset
-        query: str = f"{queries.sql} LIMIT {batch_size} OFFSET {offset};"
-        try:
-            # Create an engine and establish the connection
-            engine = sqlalchemy.create_engine(connection_string)
-            columns, result = get_data(query, engine)
-        except Exception as e:
-            logger.error(f"exception {str(e)}")
-            offset = 0
-            await asyncio.sleep(60)
-            continue
-        
+        result = await get_data()
+
         if not result:
-            offset = 0
+            logger.info("no rows found")
             await asyncio.sleep(60)
             continue
 
-        rows, unique_ids = process_rows(result, unique_ids, columns)
+        rows = []
+        for row in result:
+            if row.id in unique_ids:
+                continue
+            unique_ids.append(row.id)
+            rows.append(row)
 
         if not rows:
             logger.error(f"no unique rows")
+            await asyncio.sleep(5)
             continue
-
-        logger.debug(f"{len(unique_ids)=}, {offset=}")
 
         # Send rows to Kafka
         await send_rows_to_kafka(rows, kafka_topic="player")
 
         # Increment the offset for the next batch
         offset += batch_size
-        
+
         if offset > 100_000:
             offset = 0
+
 
 def get_players_to_scrape():
     asyncio.ensure_future(async_main())

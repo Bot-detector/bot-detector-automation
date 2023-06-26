@@ -11,6 +11,9 @@ class AppConfig(BaseSettings):
     DATABASE:str
     
     KAFKA_HOST:str
+    
+    ENDPOINT:str
+    API_TOKEN:str
 
 EMAIL_FROM = os.getenv("EMAIL_FROM")
 EMAIL_TIPOFF = os.getenv("EMAIL_TIPOFF")
