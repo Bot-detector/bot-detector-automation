@@ -104,8 +104,9 @@ async def async_main():
         rows = []
 
         for row in result:
-            if row.id in unique_ids:
-                continue
+            # for some reason we are getting alot of duplicate id's
+            # if row.id in unique_ids:
+            #     continue
             
             if not row.updated_at is None:
                 _updated_at = datetime.fromisoformat(row.updated_at)
