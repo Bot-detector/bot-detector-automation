@@ -1,7 +1,7 @@
 import asyncio
 import json
 import logging
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import aiohttp
 import aiokafka
@@ -81,7 +81,7 @@ def process_rows(result: list[Player], unique_ids: list):
 
 
 async def async_main():
-    unique_ids: list = []
+    unique_ids: dict = {}
 
     logger.info("start getting data")
     _last_day = datetime.now().strftime("%Y-%m-%d")
@@ -92,7 +92,7 @@ async def async_main():
         if _last_day != today:
             logger.info("new day!")
             _last_day = today
-            unique_ids = []
+            unique_ids:dict = {}
 
         result = await get_data()
 
@@ -105,9 +105,14 @@ async def async_main():
 
         for row in result:
             # for some reason we are getting alot of duplicate id's
-            # if row.id in unique_ids:
-            #     continue
-            
+            _time = unique_ids.get(row.id, None)
+
+            # if _time is none: we can scrape
+            if not _time is None:
+                # 
+                if _time > datetime.now():
+                    continue
+
             if not row.updated_at is None:
                 _updated_at = datetime.fromisoformat(row.updated_at)
                 _updated_at = _updated_at.strftime("%Y-%m-%d")
@@ -115,7 +120,8 @@ async def async_main():
                     logger.debug(f"already scraped today {row}")
                     continue
 
-            unique_ids.append(row.id)
+            # expirery date
+            unique_ids[row.id] = datetime.now() + timedelta(minutes=5)
             rows.append(row)
 
 
