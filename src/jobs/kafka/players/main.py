@@ -81,52 +81,39 @@ def process_rows(result: list[Player], unique_ids: list):
 
 
 async def async_main():
-    unique_ids: dict = {}
+    unique_ids: list = []
 
     logger.info("start getting data")
-    _last_day = datetime.now().strftime("%Y-%m-%d")
+    last_day = datetime.now().strftime("%Y-%m-%d")
 
     while True:
         # reset on new day
         today = datetime.now().strftime("%Y-%m-%d")
-        if _last_day != today:
-            logger.info("new day!")
-            _last_day = today
-            unique_ids:dict = {}
+        if today != last_day:
+            last_day = today
+            unique_ids = []
 
+        # get data
         result = await get_data()
 
         if not result:
-            logger.info("no rows found")
+            logger.info("resut is empty")
             await asyncio.sleep(60)
             continue
 
         rows = []
 
         for row in result:
-            # for some reason we are getting alot of duplicate id's
-            _time = unique_ids.get(row.id, None)
+            # check for duplicate id's
+            if row.id in unique_ids:
+                continue
 
-            # if _time is none: we can scrape
-            if not _time is None:
-                # 
-                if _time > datetime.now():
-                    continue
-
-            if not row.updated_at is None:
-                _updated_at = datetime.fromisoformat(row.updated_at)
-                _updated_at = _updated_at.strftime("%Y-%m-%d")
-                if _updated_at == today:
-                    logger.debug(f"already scraped today {row}")
-                    continue
-
-            # expirery date
-            unique_ids[row.id] = datetime.now() + timedelta(minutes=5)
+            unique_ids.append(row.id)
             rows.append(row)
 
-
+        # check if there are any rows
         if not rows:
-            logger.error(f"no unique rows")
+            logger.error(f"no unique rows\nexample={row.dict()}")
             await asyncio.sleep(5)
             continue
 
