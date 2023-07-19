@@ -1,5 +1,6 @@
 .env
-.venv/
+venv/linux/*
+venv/windows/*
 
 __pycache__/
 Reports/
