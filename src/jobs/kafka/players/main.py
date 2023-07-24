@@ -26,7 +26,7 @@ async def send_rows_to_kafka(rows: list[Player], kafka_topic: str):
         # Send rows to Kafka
         for row in rows:
             await producer.send(kafka_topic, key=row.name.encode(), value=row.dict())
-
+        logger.info(f"send {len(rows)} players to kafka")
     finally:
         # Wait for all messages to be sent
         await producer.flush()
@@ -34,15 +34,16 @@ async def send_rows_to_kafka(rows: list[Player], kafka_topic: str):
         await producer.stop()
 
 
-async def get_data() -> list[Player]:
+async def get_data(page:int) -> list[Player]:
     """
     This method is used to get the players to scrape from the api.
     """
     url = (
-        f"{APPCONFIG.ENDPOINT}/v1/scraper/players/0/{APPCONFIG.BATCH_SIZE}/{APPCONFIG.API_TOKEN}"
+        f"{APPCONFIG.ENDPOINT}/v2/players?page={page}&page_size={APPCONFIG.BATCH_SIZE}"
     )
+    headers = {"token":APPCONFIG.API_TOKEN}
     logger.info("fetching players to scrape")
-    async with aiohttp.ClientSession() as session:
+    async with aiohttp.ClientSession(headers=headers) as session:
         async with session.get(url) as response:
             if response.status != 200:
                 logger.error(
@@ -85,16 +86,18 @@ async def async_main():
 
     logger.info("start getting data")
     last_day = datetime.now().strftime("%Y-%m-%d")
+    page = 0
 
     while True:
+        page += 1
         # reset on new day
         today = datetime.now().strftime("%Y-%m-%d")
         if today != last_day:
-            last_day = today
+            last_day = datetime.now().strftime("%Y-%m-%d")
             unique_ids = []
 
         # get data
-        result = await get_data()
+        result = await get_data(page=page)
 
         if not result:
             logger.info("resut is empty")
