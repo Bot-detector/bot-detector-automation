@@ -94,6 +94,7 @@ async def async_main():
         if today != last_day:
             last_day = datetime.now().date()
             unique_ids = []
+            page = 1
 
         # get data
         result = await get_data(page=page)
