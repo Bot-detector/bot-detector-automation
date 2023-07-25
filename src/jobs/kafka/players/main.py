@@ -85,22 +85,21 @@ async def async_main():
     unique_ids: list = []
 
     logger.info("start getting data")
-    last_day = datetime.now().strftime("%Y-%m-%d")
-    page = 0
+    last_day = datetime.now().date()
+    page = 1
 
     while True:
-        page += 1
         # reset on new day
-        today = datetime.now().strftime("%Y-%m-%d")
+        today = datetime.now().date()
         if today != last_day:
-            last_day = datetime.now().strftime("%Y-%m-%d")
+            last_day = datetime.now().date()
             unique_ids = []
 
         # get data
         result = await get_data(page=page)
 
         if not result:
-            logger.info("resut is empty")
+            logger.info("result is empty")
             await asyncio.sleep(60)
             continue
 
@@ -111,6 +110,11 @@ async def async_main():
             if row.id in unique_ids:
                 continue
 
+            # check if already scraped for some reason
+            _updated_at = datetime.strptime(row.updated_at, "%Y-%m-%dT%H:%M:%S").date()
+            if _updated_at == today:
+                continue
+
             unique_ids.append(row.id)
             rows.append(row)
 
@@ -118,10 +122,13 @@ async def async_main():
         if not rows:
             logger.error(f"no unique rows\nexample={row.dict()}")
             await asyncio.sleep(5)
+            page += 1
             continue
 
         # Send rows to Kafka
         await send_rows_to_kafka(rows, kafka_topic="player")
+        page += 1
+        
 
 
 def get_players_to_scrape():
