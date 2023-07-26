@@ -7,3 +7,8 @@ services:
     container_name: bd-automation
     env_file:
       - .env
+    networks:
+        - botdetector-network
+        
+networks:
+    botdetector-network:
