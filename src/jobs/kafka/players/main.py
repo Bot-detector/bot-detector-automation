@@ -9,6 +9,7 @@ import aiokafka
 from .models import Player
 import config
 from config import config
+from collections import deque
 
 logger = logging.getLogger(__name__)
 APPCONFIG = config.AppConfig()
@@ -64,6 +65,7 @@ def process_rows(result: list[Player], unique_ids: list):
     for row in result:
         if row.created_at:
             row.created_at
+
         if row["created_at"]:
             row["created_at"] = row["created_at"].strftime("%Y-%m-%d %H:%M:%S")
 
@@ -82,7 +84,7 @@ def process_rows(result: list[Player], unique_ids: list):
 
 
 async def async_main():
-    unique_ids: list = []
+    unique_ids = deque(maxlen=500_000)
 
     logger.info("start getting data")
     last_day = datetime.now().date()
@@ -112,9 +114,10 @@ async def async_main():
                 continue
 
             # check if already scraped for some reason
-            _updated_at = datetime.strptime(row.updated_at, "%Y-%m-%dT%H:%M:%S").date()
-            if _updated_at == today:
-                continue
+            if row.updated_at is not None:
+                _updated_at = datetime.strptime(row.updated_at, "%Y-%m-%dT%H:%M:%S").date()
+                if _updated_at == today:
+                    continue
 
             unique_ids.append(row.id)
             rows.append(row)
@@ -127,7 +130,9 @@ async def async_main():
             continue
 
         # Send rows to Kafka
-        await send_rows_to_kafka(rows, kafka_topic="player")
+        asyncio.ensure_future(
+            send_rows_to_kafka(rows, kafka_topic="player")
+        )
         page += 1
         
 
