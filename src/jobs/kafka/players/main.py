@@ -35,14 +35,15 @@ async def send_rows_to_kafka(rows: list[Player], kafka_topic: str):
         await producer.stop()
 
 
-async def get_data(page:int) -> list[Player]:
+async def get_data(page: int) -> list[Player]:
     """
     This method is used to get the players to scrape from the api.
     """
     url = (
-        f"{APPCONFIG.ENDPOINT}/v2/players?page={page}&page_size={APPCONFIG.BATCH_SIZE}"
+        # f"{APPCONFIG.ENDPOINT}/v2/players?page={page}&page_size={APPCONFIG.BATCH_SIZE}",
+        f"{APPCONFIG.ENDPOINT}/v1/scraper/players/0/{APPCONFIG.BATCH_SIZE}/{APPCONFIG.API_TOKEN}"
     )
-    headers = {"token":APPCONFIG.API_TOKEN}
+    headers = {"token": APPCONFIG.API_TOKEN}
     logger.info("fetching players to scrape")
     async with aiohttp.ClientSession(headers=headers) as session:
         async with session.get(url) as response:
@@ -115,7 +116,9 @@ async def async_main():
 
             # check if already scraped for some reason
             if row.updated_at is not None:
-                _updated_at = datetime.strptime(row.updated_at, "%Y-%m-%dT%H:%M:%S").date()
+                _updated_at = datetime.strptime(
+                    row.updated_at, "%Y-%m-%dT%H:%M:%S"
+                ).date()
                 if _updated_at == today:
                     continue
 
@@ -130,11 +133,8 @@ async def async_main():
             continue
 
         # Send rows to Kafka
-        asyncio.ensure_future(
-            send_rows_to_kafka(rows, kafka_topic="player")
-        )
+        asyncio.ensure_future(send_rows_to_kafka(rows, kafka_topic="player"))
         page += 1
-        
 
 
 def get_players_to_scrape():
