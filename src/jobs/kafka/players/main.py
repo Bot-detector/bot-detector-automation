@@ -63,12 +63,12 @@ def process_rows(result: list[Player], unique_ids: list):
             row.created_at
 
         if row["created_at"]:
-            row["created_at"] = row["created_at"].strftime("%Y-%m-%d %H:%M:%S")
+            row["created_at"] = row["created_at"].strftime("%Y-%m-%dT%H:%M:%S")
 
         if row["updated_at"]:
             if row["updated_at"].strftime("%Y-%m-%d") == today:
                 continue
-            row["updated_at"] = row["updated_at"].strftime("%Y-%m-%d %H:%M:%S")
+            row["updated_at"] = row["updated_at"].strftime("%Y-%m-%dT%H:%M:%S")
 
         row = Player(**row)
 
@@ -83,7 +83,7 @@ def batch_list(input_list, batch_size):
         yield input_list[i:i + batch_size]
 
 async def async_main():
-    unique_ids = deque(maxlen=500_000)
+    unique_ids = deque(maxlen=100_000)
 
     logger.info("start getting data")
     last_day = datetime.now().date()
