@@ -25,8 +25,13 @@ async def send_rows_to_kafka(rows: list[Player], kafka_topic: str):
 
     try:
         # Send rows to Kafka
-        for row in rows:
-            await producer.send(kafka_topic, key=row.name.encode(), value=row.dict())
+        asyncio.gather()
+        await asyncio.gather(
+            *[
+                producer.send(kafka_topic, key=row.name.encode(), value=row.dict())
+                for row in rows
+            ]
+        )
         logger.info(f"send {len(rows)} players to kafka")
     finally:
         # Wait for all messages to be sent
@@ -40,8 +45,8 @@ async def get_data(page: int) -> list[Player]:
     This method is used to get the players to scrape from the api.
     """
     url = (
-        # f"{APPCONFIG.ENDPOINT}/v2/players?page={page}&page_size={APPCONFIG.BATCH_SIZE}",
-        f"{APPCONFIG.ENDPOINT}/v1/scraper/players/0/{APPCONFIG.BATCH_SIZE}/{APPCONFIG.API_TOKEN}"
+        f"{APPCONFIG.ENDPOINT}/v2/players?page={page}&page_size={APPCONFIG.BATCH_SIZE}"
+        # f"{APPCONFIG.ENDPOINT}/v1/scraper/players/0/{APPCONFIG.BATCH_SIZE}/{APPCONFIG.API_TOKEN}"
     )
     headers = {"token": APPCONFIG.API_TOKEN}
     logger.info("fetching players to scrape")
@@ -133,7 +138,7 @@ async def async_main():
             continue
 
         # Send rows to Kafka
-        asyncio.ensure_future(send_rows_to_kafka(rows, kafka_topic="player"))
+        asyncio.ensure_future(send_rows_to_kafka(rows.copy(), kafka_topic="player"))
         page += 1
 
 
