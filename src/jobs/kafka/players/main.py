@@ -35,8 +35,8 @@ async def get_data(page: int) -> list[Player]:
     This method is used to get the players to scrape from the api.
     """
     url = (
-        # f"{APPCONFIG.ENDPOINT}/v2/players?page={page}&page_size={APPCONFIG.BATCH_SIZE}"
-        f"{APPCONFIG.ENDPOINT}/v1/scraper/players/0/{APPCONFIG.BATCH_SIZE}/{APPCONFIG.API_TOKEN}"
+        f"{APPCONFIG.ENDPOINT}/v2/players?page={page}&page_size={APPCONFIG.BATCH_SIZE}"
+        # f"{APPCONFIG.ENDPOINT}/v1/scraper/players/0/{APPCONFIG.BATCH_SIZE}/{APPCONFIG.API_TOKEN}"
     )
     headers = {"token": APPCONFIG.API_TOKEN}
     logger.info("fetching players to scrape")
