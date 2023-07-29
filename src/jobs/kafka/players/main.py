@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 
 import aiohttp
 import aiokafka
-
+from aiokafka import AIOKafkaProducer
 from .models import Player
 import config
 from config import config
@@ -15,29 +15,19 @@ logger = logging.getLogger(__name__)
 APPCONFIG = config.AppConfig()
 
 
-async def send_rows_to_kafka(rows: list[Player], kafka_topic: str):
-    # Create Kafka producer
-    producer = aiokafka.AIOKafkaProducer(
-        bootstrap_servers=[APPCONFIG.KAFKA_HOST],
-        value_serializer=lambda x: json.dumps(x).encode(),
-    )
-    await producer.start()
-
+async def send_rows_to_kafka(producer:AIOKafkaProducer, rows: list[Player], kafka_topic: str):
     try:
         # Send rows to Kafka
-        asyncio.gather()
-        await asyncio.gather(
-            *[
-                producer.send(kafka_topic, key=row.name.encode(), value=row.dict())
-                for row in rows
-            ]
-        )
+        for row in rows:
+            await producer.send(kafka_topic, key=row.name.encode(), value=row.dict())
         logger.info(f"send {len(rows)} players to kafka")
+    except Exception as e:
+        logger.error(e)
+        # Stop the Kafka producer
+        await producer.stop()
     finally:
         # Wait for all messages to be sent
         await producer.flush()
-        # Stop the Kafka producer
-        await producer.stop()
 
 
 async def get_data(page: int) -> list[Player]:
@@ -45,8 +35,8 @@ async def get_data(page: int) -> list[Player]:
     This method is used to get the players to scrape from the api.
     """
     url = (
-        f"{APPCONFIG.ENDPOINT}/v2/players?page={page}&page_size={APPCONFIG.BATCH_SIZE}"
-        # f"{APPCONFIG.ENDPOINT}/v1/scraper/players/0/{APPCONFIG.BATCH_SIZE}/{APPCONFIG.API_TOKEN}"
+        # f"{APPCONFIG.ENDPOINT}/v2/players?page={page}&page_size={APPCONFIG.BATCH_SIZE}"
+        f"{APPCONFIG.ENDPOINT}/v1/scraper/players/0/{APPCONFIG.BATCH_SIZE}/{APPCONFIG.API_TOKEN}"
     )
     headers = {"token": APPCONFIG.API_TOKEN}
     logger.info("fetching players to scrape")
@@ -88,6 +78,9 @@ def process_rows(result: list[Player], unique_ids: list):
             unique_ids.append(row.id)
     return rows, unique_ids
 
+def batch_list(input_list, batch_size):
+    for i in range(0, len(input_list), batch_size):
+        yield input_list[i:i + batch_size]
 
 async def async_main():
     unique_ids = deque(maxlen=500_000)
@@ -95,7 +88,12 @@ async def async_main():
     logger.info("start getting data")
     last_day = datetime.now().date()
     page = 1
-
+    # Create Kafka producer
+    producer = aiokafka.AIOKafkaProducer(
+        bootstrap_servers=[APPCONFIG.KAFKA_HOST],
+        value_serializer=lambda x: json.dumps(x).encode(),
+    )
+    await producer.start()
     while True:
         # reset on new day
         today = datetime.now().date()
@@ -138,7 +136,8 @@ async def async_main():
             continue
 
         # Send rows to Kafka
-        asyncio.ensure_future(send_rows_to_kafka(rows.copy(), kafka_topic="player"))
+        for batch in batch_list(rows.copy(), batch_size=1000):
+            asyncio.ensure_future(send_rows_to_kafka(producer, batch, kafka_topic="player"))
         page += 1
 
 
