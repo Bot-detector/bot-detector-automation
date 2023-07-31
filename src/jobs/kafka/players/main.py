@@ -35,8 +35,8 @@ async def get_data(page: int) -> list[Player]:
     This method is used to get the players to scrape from the api.
     """
     url = (
-        f"{APPCONFIG.ENDPOINT}/v2/players?page={page}&page_size={APPCONFIG.BATCH_SIZE}"
-        # f"{APPCONFIG.ENDPOINT}/v1/scraper/players/0/{APPCONFIG.BATCH_SIZE}/{APPCONFIG.API_TOKEN}"
+        # f"{APPCONFIG.ENDPOINT}/v2/players?page={page}&page_size={APPCONFIG.BATCH_SIZE}"
+        f"{APPCONFIG.ENDPOINT}/v1/scraper/players/0/{APPCONFIG.BATCH_SIZE}/{APPCONFIG.API_TOKEN}"
     )
     headers = {"token": APPCONFIG.API_TOKEN}
     logger.info("fetching players to scrape")
@@ -83,7 +83,7 @@ def batch_list(input_list, batch_size):
         yield input_list[i:i + batch_size]
 
 async def async_main():
-    unique_ids = deque(maxlen=100_000)
+    unique_ids = deque(maxlen=300_000)
 
     logger.info("start getting data")
     last_day = datetime.now().date()
