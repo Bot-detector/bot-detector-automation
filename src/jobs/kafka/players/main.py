@@ -15,7 +15,9 @@ logger = logging.getLogger(__name__)
 APPCONFIG = config.AppConfig()
 
 
-async def send_rows_to_kafka(producer:AIOKafkaProducer, rows: list[Player], kafka_topic: str):
+async def send_rows_to_kafka(
+    producer: AIOKafkaProducer, rows: list[Player], kafka_topic: str
+):
     try:
         # Send rows to Kafka
         for row in rows:
@@ -30,13 +32,13 @@ async def send_rows_to_kafka(producer:AIOKafkaProducer, rows: list[Player], kafk
         await producer.flush()
 
 
-async def get_data(page: int) -> list[Player]:
+async def get_data(page: int) -> tuple[list[Player], int]:
     """
     This method is used to get the players to scrape from the api.
     """
     url = (
-        # f"{APPCONFIG.ENDPOINT}/v2/players?page={page}&page_size={APPCONFIG.BATCH_SIZE}"
-        f"{APPCONFIG.ENDPOINT}/v1/scraper/players/0/{APPCONFIG.BATCH_SIZE}/{APPCONFIG.API_TOKEN}"
+        f"{APPCONFIG.ENDPOINT}/v2/players?page={page}&page_size={APPCONFIG.BATCH_SIZE}"
+        # f"{APPCONFIG.ENDPOINT}/v1/scraper/players/0/{APPCONFIG.BATCH_SIZE}/{APPCONFIG.API_TOKEN}"
     )
     headers = {"token": APPCONFIG.API_TOKEN}
     logger.info("fetching players to scrape")
@@ -51,7 +53,7 @@ async def get_data(page: int) -> list[Player]:
             players = await response.json()
     logger.info(f"fetched {len(players)} players")
     players = [Player(**player) for player in players]
-    return players
+    return players, page + 1
 
 
 def process_rows(result: list[Player], unique_ids: list):
@@ -78,9 +80,11 @@ def process_rows(result: list[Player], unique_ids: list):
             unique_ids.append(row.id)
     return rows, unique_ids
 
+
 def batch_list(input_list, batch_size):
     for i in range(0, len(input_list), batch_size):
-        yield input_list[i:i + batch_size]
+        yield input_list[i : i + batch_size]
+
 
 async def async_main():
     unique_ids = deque(maxlen=300_000)
@@ -93,7 +97,9 @@ async def async_main():
         bootstrap_servers=[APPCONFIG.KAFKA_HOST],
         value_serializer=lambda x: json.dumps(x).encode(),
     )
+
     await producer.start()
+
     while True:
         # reset on new day
         today = datetime.now().date()
@@ -103,7 +109,11 @@ async def async_main():
             page = 1
 
         # get data
-        result = await get_data(page=page)
+        result, page = await get_data(page=page)
+        
+        if len(result) < APPCONFIG.BATCH_SIZE:
+            logger.info(f"Received {len(batch)} at {page} resetting page")
+            page = 1
 
         if not result:
             logger.info("result is empty")
@@ -132,13 +142,13 @@ async def async_main():
         if not rows:
             logger.error(f"no unique rows\nexample={row.dict()}")
             await asyncio.sleep(5)
-            page += 1
             continue
 
         # Send rows to Kafka
         for batch in batch_list(rows.copy(), batch_size=1000):
-            asyncio.ensure_future(send_rows_to_kafka(producer, batch, kafka_topic="player"))
-        page += 1
+            asyncio.ensure_future(
+                send_rows_to_kafka(producer, batch, kafka_topic="player")
+            )
 
 
 def get_players_to_scrape():
