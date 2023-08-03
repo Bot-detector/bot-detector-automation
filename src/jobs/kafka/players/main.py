@@ -56,10 +56,14 @@ async def add_data_to_queue(players:list[dict], message_queue: Queue, unique_ids
     today = datetime.now().date()
     for player in players:
         player = Player(**player)
-        date = datetime.strptime(player.updated_at, "%Y-%m-%dT%H:%M:%S").date()
 
-        if date == today:
+        if len(player.name) > 13:
             continue
+
+        if player.updated_at is not None:
+            date = datetime.strptime(player.updated_at, "%Y-%m-%dT%H:%M:%S").date()
+            if date == today:
+                continue
 
         if player.id in unique_ids:
             continue
