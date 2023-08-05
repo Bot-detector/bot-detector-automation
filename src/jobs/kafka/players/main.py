@@ -6,120 +6,135 @@ from datetime import datetime, timedelta
 import aiohttp
 import aiokafka
 from aiokafka import AIOKafkaProducer
-from .models import Player
-import config
-from config import config
-from collections import deque
+from aiohttp import ClientResponse, ClientConnectorError
 from asyncio import Queue
-from aiohttp import ClientResponse
+from collections import deque
+from typing import List
+
+from .models import Player
+from config import config
 
 logger = logging.getLogger(__name__)
 APPCONFIG = config.AppConfig()
 
 
-async def send_rows_to_kafka(kafka_topic: str, message_queue: Queue):
-    producer = aiokafka.AIOKafkaProducer(
-        bootstrap_servers=[APPCONFIG.KAFKA_HOST],
-        value_serializer=lambda x: json.dumps(x).encode(),
-    )
+class KafkaProducer:
+    def __init__(self, kafka_topic: str, message_queue: Queue):
+        self.kafka_topic = kafka_topic
+        self.message_queue = message_queue
 
-    await producer.start()
-
-    try:
-        while True:
-            message: Player = await message_queue.get()
-            await producer.send(
-                kafka_topic, key=message.name.encode(), value=message.dict()
-            )
-            message_queue.task_done()
-            
-            qsize = message_queue.qsize()
-            if qsize % 1000 == 0:
-                logger.info(f"{qsize=}")
-    except Exception as e:
-        logger.error(e)
-    finally:
-        await producer.flush()
-        await producer.stop()
-
-
-async def handle_aiohttp_error(response: ClientResponse):
-    if response.status != 200:
-        logger.error(
-            f"response status {response.status}"
-            f"response body: {await response.text()}"
+    async def start(self):
+        producer = AIOKafkaProducer(
+            bootstrap_servers=[APPCONFIG.KAFKA_HOST],
+            value_serializer=lambda x: json.dumps(x).encode(),
         )
-        raise Exception("error fetching players")
+        await producer.start()
+
+        try:
+            while True:
+                message: Player = await self.message_queue.get()
+                await producer.send(
+                    self.kafka_topic, key=message.name.encode(), value=message.dict()
+                )
+                self.message_queue.task_done()
+
+                qsize = self.message_queue.qsize()
+                if qsize % 1000 == 0:
+                    logger.info(f"{qsize=}")
+        except Exception as e:
+            logger.error(e)
+        finally:
+            await producer.flush()
+            await producer.stop()
 
 
-async def add_data_to_queue(players:list[dict], message_queue: Queue, unique_ids:list[int]):
-    today = datetime.now().date()
-    for player in players:
-        player = Player(**player)
+class DataFetcher:
+    def __init__(self, message_queue: Queue):
+        self.message_queue = message_queue
+        self.headers = {"token": APPCONFIG.API_TOKEN}
+        self.session = aiohttp.ClientSession(headers=self.headers)
 
-        if len(player.name) > 13:
-            continue
+    async def handle_aiohttp_error(self, response: ClientResponse):
+        if response.status != 200:
+            logger.error(
+                f"response status {response.status}"
+                f"response body: {await response.text()}"
+            )
+            raise Exception("error fetching players")
 
-        if player.updated_at is not None:
-            date = datetime.strptime(player.updated_at, "%Y-%m-%dT%H:%M:%S").date()
-            if date == today:
+    async def add_data_to_queue(
+        self, players: List[dict], unique_ids: List[int]
+    ):
+        today = datetime.now().date()
+        for player in players:
+            player = Player(**player)
+
+            if len(player.name) > 13:
                 continue
 
-        if player.id in unique_ids:
-            continue
+            if player.updated_at is not None:
+                date = datetime.strptime(player.updated_at, "%Y-%m-%dT%H:%M:%S").date()
+                if date == today:
+                    continue
 
-        await message_queue.put(player)
-        unique_ids.append(player.id)
+            if player.id in unique_ids:
+                continue
 
-        qsize = message_queue.qsize()
-        if qsize % 1000 == 0:
-            logger.info(f"{qsize=} {len(unique_ids)=}")
-    return 
+            await self.message_queue.put(player)
+            unique_ids.append(player.id)
 
-async def get_data(message_queue: Queue):
-    page = 1
-    unique_ids = deque(maxlen=100_000)
-    headers = {"token": APPCONFIG.API_TOKEN}
-    last_day = datetime.now().date()
+            qsize = self.message_queue.qsize()
+            if qsize % 1000 == 0:
+                logger.info(f"{qsize=} {len(unique_ids)=}")
 
-    while True:
-        if message_queue.qsize() > int(message_queue.maxsize / 2):
-            await asyncio.sleep(1)
-            continue
+    async def get_data(self):
+        page = 1
+        unique_ids = deque(maxlen=100_000)
+        last_day = datetime.now().date()
 
-        url = f"{APPCONFIG.ENDPOINT}/v2/players?page={page}&page_size={APPCONFIG.BATCH_SIZE}"
-        # url = f"{APPCONFIG.ENDPOINT}/v1/scraper/players/0/{APPCONFIG.BATCH_SIZE}/{APPCONFIG.API_TOKEN}"
-        logger.info(f"fetching players to scrape {page=}")
+        while True:
+            if self.message_queue.qsize() > int(self.message_queue.maxsize / 2):
+                await asyncio.sleep(1)
+                continue
 
-        today = datetime.now().date()
+            url = f"{APPCONFIG.ENDPOINT}/v1/scraper/players/{page}/{APPCONFIG.BATCH_SIZE}/{APPCONFIG.API_TOKEN}"
+            logger.info(f"fetching players to scrape {page=}")
 
-        if today != last_day:
-            last_day = datetime.now().date()
-            unique_ids.clear()
-            page = 1
+            today = datetime.now().date()
 
-        async with aiohttp.ClientSession(headers=headers) as session:
-            async with session.get(url) as response:
-                await handle_aiohttp_error(response)
-                players = await response.json()
+            if today != last_day:
+                last_day = datetime.now().date()
+                unique_ids.clear()
+                page = 1
 
-        logger.info(f"fetched {len(players)} players")
+            try:
+                async with self.session.get(url) as response:
+                    await self.handle_aiohttp_error(response)
+                    players = await response.json()
+            except Exception as error:
+                logger.error(f"An error occurred: {type(error)} - {str(error)}")
+                await asyncio.sleep(5)  # Adjust the delay as needed
+                continue
 
-        if len(players) < APPCONFIG.BATCH_SIZE:
-            logger.info(f"Received {len(players)} at {page} resetting page")
-            page = 1
-            continue
+            logger.info(f"fetched {len(players)} players")
 
-        
-        asyncio.ensure_future(add_data_to_queue(players, message_queue, unique_ids))
+            if len(players) < APPCONFIG.BATCH_SIZE:
+                logger.info(f"Received {len(players)} at {page} resetting page")
+                page = 1
+                continue
 
-        page += 1
+            asyncio.ensure_future(self.add_data_to_queue(players, unique_ids))
+
+            page += 1
 
 
 async def async_main():
     message_queue = Queue(maxsize=10_000)
-    asyncio.ensure_future(get_data(message_queue))
-    asyncio.ensure_future(send_rows_to_kafka("player", message_queue))
+    data_fetcher = DataFetcher(message_queue)
+    kafka_producer = KafkaProducer("player", message_queue)
+
+    asyncio.ensure_future(data_fetcher.get_data())
+    asyncio.ensure_future(kafka_producer.start())
 
 
 def get_players_to_scrape():
