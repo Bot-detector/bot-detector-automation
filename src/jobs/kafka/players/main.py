@@ -62,9 +62,7 @@ class DataFetcher:
             )
             raise Exception("error fetching players")
 
-    async def add_data_to_queue(
-        self, players: List[dict], unique_ids: List[int]
-    ):
+    async def add_data_to_queue(self, players: List[dict], unique_ids: List[int]):
         today = datetime.now().date()
         for player in players:
             player = Player(**player)
@@ -97,7 +95,11 @@ class DataFetcher:
                 await asyncio.sleep(1)
                 continue
 
-            url = f"{APPCONFIG.ENDPOINT}/v1/scraper/players/{page}/{APPCONFIG.BATCH_SIZE}/{APPCONFIG.API_TOKEN}"
+            # url = f"{APPCONFIG.ENDPOINT}/v1/scraper/players/{page}/{APPCONFIG.BATCH_SIZE}/{APPCONFIG.API_TOKEN}"
+            url = f"{APPCONFIG.ENDPOINT}/v2/players/"
+            params = {"page": page, "page_size": APPCONFIG.BATCH_SIZE}
+            headers = {"token": APPCONFIG.API_TOKEN}
+            
             logger.info(f"fetching players to scrape {page=}")
 
             today = datetime.now().date()
@@ -108,7 +110,9 @@ class DataFetcher:
                 page = 1
 
             try:
-                async with self.session.get(url) as response:
+                async with self.session.get(
+                    url, params=params, headers=headers
+                ) as response:
                     await self.handle_aiohttp_error(response)
                     players = await response.json()
             except Exception as error:
