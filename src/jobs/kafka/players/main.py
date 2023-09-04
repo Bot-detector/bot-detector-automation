@@ -87,7 +87,7 @@ class DataFetcher:
 
     async def get_data(self):
         page = 1
-        unique_ids = deque(maxlen=100_000)
+        unique_ids = deque(maxlen=10_000_000)
         last_day = datetime.now().date()
 
         while True:
@@ -95,8 +95,8 @@ class DataFetcher:
                 await asyncio.sleep(1)
                 continue
 
-            # url = f"{APPCONFIG.ENDPOINT}/v1/scraper/players/{page}/{APPCONFIG.BATCH_SIZE}/{APPCONFIG.API_TOKEN}"
-            url = f"{APPCONFIG.ENDPOINT}/v2/players/"
+            url = f"{APPCONFIG.ENDPOINT}/v1/scraper/players/{page}/{APPCONFIG.BATCH_SIZE}/{APPCONFIG.API_TOKEN}"
+            # url = f"{APPCONFIG.ENDPOINT}/v2/players/"
             params = {"page": page, "page_size": APPCONFIG.BATCH_SIZE}
             headers = {"token": APPCONFIG.API_TOKEN}
             
