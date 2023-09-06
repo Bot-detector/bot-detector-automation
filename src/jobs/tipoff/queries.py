@@ -2,6 +2,7 @@ TIPOFF_CONFIG = '''
     SELECT DISTINCT
         pl.name,
         UNIX_TIMESTAMP(rp.timestamp)*1000 as timestamp,
+        rp.world_number,
         rid.region_name,
         p.prediction,
         p.Predicted_confidence

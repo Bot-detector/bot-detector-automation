@@ -37,9 +37,9 @@ async def main():
         misfire_grace_time=60,
     )
 
-    get_players_to_scrape()
+    # get_players_to_scrape()
     # broadcaster.broadcast_bans()
-    # tip_off.tipoff_bots()
+    tipoff_bots()
     while True:
         await asyncio.sleep(60)
 

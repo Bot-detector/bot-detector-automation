@@ -16,6 +16,7 @@ def get_tipoff_data():
     logger.debug("Getting tipoff information")
     connection = pymysql.connect(
         host=config.SERVER_ADDRESS,
+        port=config.SERVER_PORT,
         user=config.SERVER_LOGIN,
         passwd=config.SERVER_PASSWORD,
         database=config.DATABASE,
