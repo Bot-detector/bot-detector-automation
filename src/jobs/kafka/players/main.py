@@ -46,7 +46,10 @@ class KafkaProducer:
         finally:
             await producer.flush()
             await producer.stop()
-            await self.start()
+
+        # if for some reason we break the loop, just restart
+        await asyncio.sleep(60)
+        await self.start()
 
 
 class DataFetcher:
