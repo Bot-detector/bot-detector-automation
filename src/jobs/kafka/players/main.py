@@ -46,6 +46,7 @@ class KafkaProducer:
         finally:
             await producer.flush()
             await producer.stop()
+            await self.start()
 
 
 class DataFetcher:
