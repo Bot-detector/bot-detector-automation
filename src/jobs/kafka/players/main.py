@@ -145,10 +145,12 @@ class DataFetcher:
 async def retry(f) -> None:
     while True:
         try:
-            logger.info(f'starting: {f.__name__}')
+            class_name = f.__self__.__class__.__name__
+            method_name = f.__name__
+            logger.info(f'starting: {class_name}.{method_name}')
             await f()
         except Exception as e:
-            logger.error(f"{f.__name__} - {e}")
+            logger.error(f"{class_name}.{method_name} - {e}")
             pass
     
 async def async_main():
