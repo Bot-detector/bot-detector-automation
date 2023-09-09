@@ -73,6 +73,7 @@ class DataFetcher:
 
     async def add_data_to_queue(self, players: List[dict], unique_ids: List[int]):
         today = datetime.now().date()
+        added = 0
         for player in players:
             player = Player(**player)
 
@@ -89,10 +90,11 @@ class DataFetcher:
 
             await self.message_queue.put(player)
             unique_ids.append(player.id)
+            added += 1
 
             qsize = self.message_queue.qsize()
             if qsize % 1000 == 0:
-                logger.info(f"{qsize=} {len(unique_ids)=}")
+                logger.info(f"{qsize=}, {len(unique_ids)=}, {added=}")
 
     async def get_data(self):
         logger.info(f"starting: {self.__class__.__name__}")
