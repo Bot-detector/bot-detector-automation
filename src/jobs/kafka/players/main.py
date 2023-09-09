@@ -136,14 +136,22 @@ class DataFetcher:
 
             page += 1
 
-
+async def retry(f) -> None:
+    while True:
+        try:
+            logger.info(f'starting: {f.__name__}')
+            await f()
+        except Exception as e:
+            logger.error(f"{f.__name__} - {e}")
+            pass
+    
 async def async_main():
     message_queue = Queue(maxsize=10_000)
     data_fetcher = DataFetcher(message_queue)
     kafka_producer = KafkaProducer("player", message_queue)
 
-    asyncio.ensure_future(data_fetcher.get_data())
-    asyncio.ensure_future(kafka_producer.start())
+    asyncio.ensure_future(retry(data_fetcher.get_data))
+    asyncio.ensure_future(retry(kafka_producer.start))
 
 
 def get_players_to_scrape():
