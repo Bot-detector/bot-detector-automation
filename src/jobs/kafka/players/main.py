@@ -23,7 +23,20 @@ class KafkaProducer:
         self.kafka_topic = kafka_topic
         self.message_queue = message_queue
 
+    async def send_messages(self, producer):
+        while True:
+            message: Player = await self.message_queue.get()
+            await producer.send(
+                self.kafka_topic, key=message.name.encode(), value=message.dict()
+            )
+            self.message_queue.task_done()
+
+            qsize = self.message_queue.qsize()
+            if qsize % 1000 == 0:
+                logger.info(f"{qsize=}")
+            
     async def start(self):
+        logger.info(f"starting: {self.__class__.__name__}")
         producer = AIOKafkaProducer(
             bootstrap_servers=[APPCONFIG.KAFKA_HOST],
             value_serializer=lambda x: json.dumps(x).encode(),
@@ -31,22 +44,14 @@ class KafkaProducer:
         await producer.start()
 
         try:
-            while True:
-                message: Player = await self.message_queue.get()
-                await producer.send(
-                    self.kafka_topic, key=message.name.encode(), value=message.dict()
-                )
-                self.message_queue.task_done()
-
-                qsize = self.message_queue.qsize()
-                if qsize % 1000 == 0:
-                    logger.info(f"{qsize=}")
+            await self.send_messages(producer=producer)
         except Exception as e:
             logger.error(e)
         finally:
             await producer.flush()
             await producer.stop()
-
+        
+        logger.info("restarting")
         # if for some reason we break the loop, just restart
         await asyncio.sleep(60)
         await self.start()
@@ -90,6 +95,7 @@ class DataFetcher:
                 logger.info(f"{qsize=} {len(unique_ids)=}")
 
     async def get_data(self):
+        logger.info(f"starting: {self.__class__.__name__}")
         page = 1
         unique_ids = deque(maxlen=1_000_000)
         last_day = datetime.now().date()
