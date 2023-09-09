@@ -94,7 +94,8 @@ class DataFetcher:
 
             qsize = self.message_queue.qsize()
             if qsize % 1000 == 0:
-                logger.info(f"{qsize=}, {len(unique_ids)=}, {added=}")
+                logger.info(f"{qsize=}, {len(unique_ids)=}")
+        logger.info(f"{added=}")
 
     async def get_data(self):
         logger.info(f"starting: {self.__class__.__name__}")
