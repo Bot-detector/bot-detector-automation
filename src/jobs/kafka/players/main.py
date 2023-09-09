@@ -34,7 +34,7 @@ class KafkaProducer:
             qsize = self.message_queue.qsize()
             if qsize % 1000 == 0:
                 logger.info(f"{qsize=}")
-            
+
     async def start(self):
         logger.info(f"starting: {self.__class__.__name__}")
         producer = AIOKafkaProducer(
@@ -50,7 +50,7 @@ class KafkaProducer:
         finally:
             await producer.flush()
             await producer.stop()
-        
+
         logger.info("restarting")
         # if for some reason we break the loop, just restart
         await asyncio.sleep(60)
@@ -108,7 +108,9 @@ class DataFetcher:
                 await asyncio.sleep(1)
                 continue
 
+            page = page if page <= 10 else 0  # only for scraper endpoint
             url = f"{APPCONFIG.ENDPOINT}/v1/scraper/players/{page}/{APPCONFIG.BATCH_SIZE}/{APPCONFIG.API_TOKEN}"
+
             # url = f"{APPCONFIG.ENDPOINT}/v2/players/"
 
             params = {"page": page, "page_size": APPCONFIG.BATCH_SIZE}
@@ -145,17 +147,19 @@ class DataFetcher:
 
             page += 1
 
+
 async def retry(f) -> None:
     while True:
         try:
             class_name = f.__self__.__class__.__name__
             method_name = f.__name__
-            logger.info(f'starting: {class_name}.{method_name}')
+            logger.info(f"starting: {class_name}.{method_name}")
             await f()
         except Exception as e:
             logger.error(f"{class_name}.{method_name} - {e}")
             pass
-    
+
+
 async def async_main():
     message_queue = Queue(maxsize=10_000)
     data_fetcher = DataFetcher(message_queue)
