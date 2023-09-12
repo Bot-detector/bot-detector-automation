@@ -108,10 +108,10 @@ class DataFetcher:
                 await asyncio.sleep(1)
                 continue
 
-            page = page if page <= 10 else 0  # only for scraper endpoint
-            url = f"{APPCONFIG.ENDPOINT}/v1/scraper/players/{page}/{APPCONFIG.BATCH_SIZE}/{APPCONFIG.API_TOKEN}"
+            # page = page if page <= 10 else 0  # only for scraper endpoint
+            # url = f"{APPCONFIG.ENDPOINT}/v1/scraper/players/{page}/{APPCONFIG.BATCH_SIZE}/{APPCONFIG.API_TOKEN}"
 
-            # url = f"{APPCONFIG.ENDPOINT}/v2/players/"
+            url = f"{APPCONFIG.ENDPOINT}/v2/players/"
 
             params = {"page": page, "page_size": APPCONFIG.BATCH_SIZE}
             headers = {"token": APPCONFIG.API_TOKEN}
