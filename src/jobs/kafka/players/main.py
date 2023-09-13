@@ -66,7 +66,7 @@ class DataFetcher:
     async def handle_aiohttp_error(self, response: ClientResponse):
         if response.status != 200:
             logger.error(
-                f"response status {response.status}"
+                f"response status {response.status} "
                 f"response body: {await response.text()}"
             )
             raise Exception("error fetching players")
@@ -102,6 +102,7 @@ class DataFetcher:
         page = 1
         unique_ids = deque(maxlen=1_000_000)
         last_day = datetime.now().date()
+        max_id = 1
 
         while True:
             if self.message_queue.qsize() > int(self.message_queue.maxsize / 2):
@@ -113,10 +114,14 @@ class DataFetcher:
 
             url = f"{APPCONFIG.ENDPOINT}/v2/players/"
 
-            params = {"page": page, "page_size": APPCONFIG.BATCH_SIZE}
+            params = {
+                "page_size": APPCONFIG.BATCH_SIZE, 
+                "greater_than": max_id
+            }
+
             headers = {"token": APPCONFIG.API_TOKEN}
 
-            logger.info(f"fetching players to scrape {page=}")
+            logger.info(f"fetching players to scrape {page=}, {max_id=}")
 
             today = datetime.now().date()
 
@@ -124,6 +129,7 @@ class DataFetcher:
                 last_day = datetime.now().date()
                 unique_ids.clear()
                 page = 1
+                max_id = 0
 
             try:
                 async with self.session.get(
@@ -144,6 +150,9 @@ class DataFetcher:
                 continue
 
             asyncio.ensure_future(self.add_data_to_queue(players, unique_ids))
+            
+            players_max = max([p.get('id') for p in players]) 
+            max_id = players_max if players_max > max_id else max_id
 
             page += 1
 
