@@ -89,7 +89,7 @@ class DataFetcher:
                 logger.info(f"{qsize=}, {len(unique_ids)=}")
         logger.info(f"{added=}")
 
-    async def get_data(self, url:str, params:dict) -> list[dict]:
+    async def get_data(self, url: str, params: dict) -> list[dict]:
         async with aiohttp.ClientSession() as session:
             async with session.get(url, params=params, headers=self.headers) as resp:
                 if not resp.ok:
@@ -101,14 +101,16 @@ class DataFetcher:
                     raise ValueError(error_message)
                 data = await resp.json()
                 return data
-    
+
     async def main(self):
         logger.info(f"starting: {self.__class__.__name__}")
-        page = 1
+
         unique_ids = deque(maxlen=1_000_000)
         last_day = datetime.now().date()
         max_id = 0
 
+        params = {"page_size": APPCONFIG.BATCH_SIZE, "greater_than": max_id}
+        url = f"{APPCONFIG.ENDPOINT}/v2/players/"
         while True:
             if self.message_queue.qsize() > int(self.message_queue.maxsize / 2):
                 await asyncio.sleep(1)
@@ -117,19 +119,14 @@ class DataFetcher:
             today = datetime.now().date()
 
             if today != last_day:
+                logger.info("new day, resetting")
                 last_day = datetime.now().date()
                 unique_ids.clear()
-                page = 1
-                max_id = 0
-            
-            logger.info(f"fetching players to scrape {page=}, {max_id=}")
+                params["max_id"] = 0
+
+            logger.info(f"fetching players to scrape {max_id=}")
 
             try:
-                url = f"{APPCONFIG.ENDPOINT}/v2/players/"
-                params = {
-                    "page_size": APPCONFIG.BATCH_SIZE, 
-                    "greater_than": max_id
-                }
                 players = await self.get_data(url=url, params=params)
             except Exception as error:
                 logger.error(f"An error occurred: {type(error)} - {str(error)}")
@@ -139,16 +136,14 @@ class DataFetcher:
             logger.info(f"fetched {len(players)} players")
 
             if len(players) < APPCONFIG.BATCH_SIZE:
-                logger.info(f"Received {len(players)} at {page} resetting page")
-                page = 1
+                logger.info(f"Received {len(players)}")
                 continue
 
             asyncio.ensure_future(self.add_data_to_queue(players, unique_ids))
-            
-            players_max = max([p.get('id') for p in players]) 
-            max_id = players_max if players_max > max_id else max_id
 
-            page += 1
+            players_max = max([p.get("id") for p in players])
+            max_id = players_max if players_max > max_id else max_id
+            params["max_id"] = max_id
 
 
 async def retry(f) -> None:
@@ -168,8 +163,8 @@ async def async_main():
     data_fetcher = DataFetcher(message_queue)
     kafka_producer = KafkaProducer("player", message_queue)
 
-    asyncio.ensure_future(retry(data_fetcher.main))
-    asyncio.ensure_future(retry(kafka_producer.start))
+    asyncio.ensure_future(data_fetcher.main())
+    asyncio.ensure_future(kafka_producer.start())
 
 
 def get_players_to_scrape():
