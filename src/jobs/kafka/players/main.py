@@ -110,7 +110,7 @@ class DataFetcher:
         max_id = 0
 
         params = {
-            "page_size": APPCONFIG.BATCH_SIZE,
+            "limit": APPCONFIG.BATCH_SIZE,
             "player_id": max_id,
             "greater_than": 1,
         }
