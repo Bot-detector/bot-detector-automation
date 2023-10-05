@@ -109,8 +109,12 @@ class DataFetcher:
         last_day = datetime.now().date()
         max_id = 0
 
-        params = {"page_size": APPCONFIG.BATCH_SIZE, "greater_than": max_id}
-        url = f"{APPCONFIG.ENDPOINT}/v2/players/"
+        params = {
+            "page_size": APPCONFIG.BATCH_SIZE,
+            "player_id": max_id,
+            "greater_than": True,
+        }
+        url = f"{APPCONFIG.ENDPOINT}/v2/player/"
         while True:
             if self.message_queue.qsize() > int(self.message_queue.maxsize / 2):
                 await asyncio.sleep(1)
