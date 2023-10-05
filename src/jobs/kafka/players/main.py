@@ -126,7 +126,7 @@ class DataFetcher:
                 logger.info("new day, resetting")
                 last_day = datetime.now().date()
                 unique_ids.clear()
-                params["greater_than"] = 0
+                params["player_id"] = 0
 
             logger.info(f"fetching players to scrape {max_id=}")
 
@@ -147,7 +147,7 @@ class DataFetcher:
 
             players_max = max([p.get("id") for p in players])
             max_id = players_max if players_max > max_id else max_id
-            params["greater_than"] = max_id
+            params["player_id"] = max_id
 
 
 async def retry(f) -> None:
