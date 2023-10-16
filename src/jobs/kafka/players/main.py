@@ -141,7 +141,7 @@ class DataFetcher:
 
             if len(players) < APPCONFIG.BATCH_SIZE:
                 logger.info(f"Received {len(players)}")
-                continue
+                await asyncio.sleep(300)
 
             asyncio.ensure_future(self.add_data_to_queue(players, unique_ids))
 

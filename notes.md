@@ -13,8 +13,8 @@ make sure to have pip
 sudo apt install python3-pip
 ```
 ```sh
-python3 -m venv venv/linux/.venv
-source venv\linux\.venv\Scripts\activate
+python3 -m venv .venv
+source .venv/bin/activate
 python3 -m pip install --upgrade pip
 pip install -r requirements.txt
 ```
