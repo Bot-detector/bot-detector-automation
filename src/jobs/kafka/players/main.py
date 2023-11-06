@@ -105,7 +105,7 @@ class DataFetcher:
     async def main(self):
         logger.info(f"starting: {self.__class__.__name__}")
 
-        unique_ids = deque(maxlen=1_000_000)
+        unique_ids = deque(maxlen=500_000)
         last_day = datetime.now().date()
         max_id = 0
 
