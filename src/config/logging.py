@@ -1,6 +1,6 @@
+import json
 import logging
 import sys
-import json
 
 # setup logging
 file_handler = logging.FileHandler(filename="./error.log", mode="a")
@@ -23,7 +23,7 @@ file_handler.setFormatter(formatter)
 stream_handler.setFormatter(formatter)
 
 handlers = [
-    # file_handler, 
+    # file_handler,
     stream_handler
 ]
 

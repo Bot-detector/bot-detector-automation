@@ -6,7 +6,9 @@ from email.mime.text import MIMEText
 
 import pandas as pd
 import pymysql
+
 from config import config
+
 from . import queries
 
 logger = logging.getLogger(__name__)
