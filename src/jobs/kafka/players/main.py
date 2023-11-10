@@ -71,7 +71,7 @@ async def parse_data(players: list[dict]):
 
 async def get_request(
     url: str, params: dict, headers: dict = {}
-) -> tuple(list[dict], Any):
+) -> tuple[list[dict], Any]:
     data = None
     error = None
     async with aiohttp.ClientSession() as session:
@@ -111,7 +111,7 @@ async def get_data(receive_queue: Queue):
             continue
 
         players = await parse_data(players=players)
-
+        logger.info(f"Received: {len(players)=}")
         await asyncio.gather(*[receive_queue.put(item=p) for p in players])
 
         if len(players) < APPCONFIG.BATCH_SIZE:
