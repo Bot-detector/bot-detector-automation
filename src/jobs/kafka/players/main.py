@@ -125,6 +125,7 @@ async def get_data(receive_queue: Queue):
             params["player_id"] = max_id
 
         if today != last_day:
+            logger.info("New day!, resetting player_id to 0")
             params["player_id"] = 0
 
 
