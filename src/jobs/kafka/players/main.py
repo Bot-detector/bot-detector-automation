@@ -112,7 +112,7 @@ async def get_data(receive_queue: Queue):
             continue
 
         players = await parse_data(players=players)
-        logger.info({"reeived": len(players), "max_id": {params.get("player_id")}})
+        logger.info({"received": len(players), "max_id": {params.get("player_id")}})
 
         await asyncio.gather(*[receive_queue.put(item=p) for p in players])
 
