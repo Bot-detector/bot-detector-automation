@@ -39,7 +39,7 @@ async def send_messages(topic: str, producer: AIOKafkaProducer, send_queue: Queu
 
         messages_sent += 1
 
-        if messages_sent >= 100:
+        if messages_sent >= 1000:
             current_time = time()
             elapsed_time = current_time - last_interval
             speed = messages_sent / elapsed_time
@@ -111,7 +111,8 @@ async def get_data(receive_queue: Queue):
             continue
 
         players = await parse_data(players=players)
-        logger.info(f"Received: {len(players)=}")
+        logger.info({"reeived": len(players), "max_id": {params.get("player_id")}})
+
         await asyncio.gather(*[receive_queue.put(item=p) for p in players])
 
         if len(players) < APPCONFIG.BATCH_SIZE:
