@@ -104,13 +104,14 @@ async def get_data(receive_queue: Queue):
     while True:
         today = datetime.now().date()
         players, error = await get_request(url=url, params=params, headers=headers)
-        len_players = len(players)
 
         if error is not None:
             sleep_time = 30
             logger.info(f"sleeping {sleep_time}")
             await asyncio.sleep(sleep_time)
             continue
+
+        len_players = len(players)
 
         players, max_id = await parse_data(players=players)
         logger.info(
