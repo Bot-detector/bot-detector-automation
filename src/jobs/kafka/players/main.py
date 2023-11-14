@@ -33,8 +33,8 @@ async def send_messages(topic: str, producer: AIOKafkaProducer, send_queue: Queu
     while True:
         if send_queue.empty():
             await asyncio.sleep(1)
-        message = await send_queue.get()
-        await producer.send(topic, value=message)
+        message:Player = await send_queue.get()
+        await producer.send(topic, value=message.model_dump_json())
         send_queue.task_done()
 
         messages_sent += 1
