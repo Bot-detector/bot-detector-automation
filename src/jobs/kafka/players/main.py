@@ -101,19 +101,15 @@ async def get_data(receive_queue: Queue):
     url = f"{APPCONFIG.ENDPOINT}/v2/player/"
 
     while True:
-        sleep = None
         today = datetime.now().date()
         players, error = await get_request(url=url, params=params, headers=headers)
+        len_players = len(players)
 
         if error is not None:
             sleep_time = 30
             logger.info(f"sleeping {sleep_time}")
             await asyncio.sleep(sleep_time)
             continue
-
-        if len(players) < APPCONFIG.BATCH_SIZE:
-            _players = len(players)
-            sleep = 300
 
         players = await parse_data(players=players)
         logger.info({"reeived": len(players), "max_id": {params.get("player_id")}})
@@ -129,9 +125,10 @@ async def get_data(receive_queue: Queue):
             logger.info("New day!, resetting player_id to 0")
             params["player_id"] = 0
 
-        if sleep:
-            logger.info(f"Received {_players}, sleeping: {sleep}")
-            await asyncio.sleep(sleep)
+        if len_players < APPCONFIG.BATCH_SIZE:
+            sleep_time = 300
+            logger.info(f"Received {len_players}, sleeping: {sleep_time}")
+            await asyncio.sleep(sleep_time)
 
 
 async def main():
