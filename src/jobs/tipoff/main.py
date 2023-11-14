@@ -2,17 +2,16 @@ import logging
 import os
 from datetime import date
 
-from discord_webhook import DiscordWebhook
-
-
-from discord import SyncWebhook, File
 import requests
+from discord import File, SyncWebhook
+from discord_webhook import DiscordWebhook
 
 from config import config
 
 from . import functions
 
 logger = logging.getLogger(__name__)
+
 
 def make_folder() -> None:
     try:
@@ -21,12 +20,14 @@ def make_folder() -> None:
         logger.error(str(e))
     return
 
-def call_webhook(path:str, url:str) -> None:
+
+def call_webhook(path: str, url: str) -> None:
     logger.debug("sending webhook")
     webhook = SyncWebhook.from_url(url, session=requests.Session())
     file = File(path)
     webhook.send(content="<@&893399220172767253>", file=file)
     return
+
 
 def tipoff_bots() -> None:
     logger.info("Crafting Tipoff")
@@ -40,7 +41,7 @@ def tipoff_bots() -> None:
     if dataframe_length < 1:
         logger.debug(f"dataframe is to small: #{dataframe_length}")
         return
-    
+
     REPORT_NAME = f"BDP-{today_ISO}-{dataframe_length}"
     REPORT_FILE_NAME = REPORT_NAME + ".csv"
 
@@ -56,9 +57,10 @@ def tipoff_bots() -> None:
         PATH_TO_CSV_FILE=PATH_TO_CSV_FILE,
         FILE_NAME=REPORT_FILE_NAME,
     )
-    
+
     call_webhook(path=PATH_TO_CSV_FILE, url=config.PATRON_WEBHOOK)
     return
+
 
 if __name__ == "__main__":
     tipoff_bots()

@@ -1,4 +1,4 @@
-TIPOFF_CONFIG = '''
+TIPOFF_CONFIG = """
     SELECT DISTINCT
         pl.name,
         UNIX_TIMESTAMP(rp.timestamp)*1000 as timestamp,
@@ -22,4 +22,4 @@ TIPOFF_CONFIG = '''
         )
         and rp.timestamp >= current_timestamp() - interval 1 day
     order by p.prediction desc
-'''
+"""

@@ -1,3 +1,4 @@
+import asyncio
 import logging
 
 from apscheduler.executors.pool import ProcessPoolExecutor
@@ -6,7 +7,6 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from jobs.banbroadcaster.main import broadcast_bans
 from jobs.kafka.players.main import get_players_to_scrape
 from jobs.tipoff.main import tipoff_bots
-import asyncio
 
 logger = logging.getLogger(__name__)
 

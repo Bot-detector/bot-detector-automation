@@ -5,19 +5,16 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Python: Current File",
+            "name": "Python: FastAPI",
             "type": "python",
             "request": "launch",
-            "program": "${file}",
-            "console": "integratedTerminal",
-            "justMyCode": true
-        },
-        {
-            "name": "Run main",
-            "type": "python",
-            "request": "launch",
-            "program": "src/main.py",
-            "console": "integratedTerminal",
+            "module": "uvicorn",
+            "args": [
+                "src.core.server:app",
+                "--reload",
+                "--port", "5000"
+            ],
+            "jinja": true,
             "justMyCode": true
         }
     ]

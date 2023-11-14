@@ -1,20 +1,23 @@
-from pydantic import BaseSettings
+import os
+
 import dotenv
-import os 
+from pydantic import BaseSettings
 
 dotenv.load_dotenv()
 
-class AppConfig(BaseSettings):
-    SERVER_LOGIN:str
-    SERVER_PASSWORD:str
-    SERVER_ADDRESS:str
-    DATABASE:str
-    
-    KAFKA_HOST:str
 
-    ENDPOINT:str
-    API_TOKEN:str
-    BATCH_SIZE:int = 10_000
+class AppConfig(BaseSettings):
+    SERVER_LOGIN: str
+    SERVER_PASSWORD: str
+    SERVER_ADDRESS: str
+    DATABASE: str
+
+    KAFKA_HOST: str
+
+    ENDPOINT: str
+    API_TOKEN: str
+    BATCH_SIZE: int = 10_000
+
 
 EMAIL_FROM = os.getenv("EMAIL_FROM")
 EMAIL_TIPOFF = os.getenv("EMAIL_TIPOFF")

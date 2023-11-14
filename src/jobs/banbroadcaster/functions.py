@@ -2,14 +2,15 @@ import logging
 import operator
 import time
 from collections import namedtuple
-from datetime import  datetime
+from datetime import datetime
 from typing import List
 
-from config import config
 import mysql.connector
 import tweepy
 from discord_webhook import DiscordWebhook
 from discord_webhook.webhook import DiscordEmbed
+
+from config import config
 
 from . import queries
 
@@ -53,7 +54,9 @@ def execute_sql(sql: str, insert: bool = False, param: dict = None):
 
 def get_ban_counts():
     total_pending_bans = execute_sql(sql=queries.sql_get_count_banned_players)[0].bans
-    real_player_bans = execute_sql(sql=queries.sql_get_count_banned_real_players)[0].real_bans
+    real_player_bans = execute_sql(sql=queries.sql_get_count_banned_real_players)[
+        0
+    ].real_bans
     no_data_bans = execute_sql(sql=queries.sql_get_count_banned_no_data)[0].no_data_bans
 
     try:
@@ -136,7 +139,6 @@ def broadcast_totals(
 
 
 def broadcast_names(names_list: List[str]):
-
     logger.debug("Broadcasting Names")
     while True:
         num_pending_players = len(names_list)
@@ -180,7 +182,6 @@ def post_bans_tweet(num_bans: int):
 
 
 def post_breakdown_tweets(predictions: List[str]):
-
     logger.debug("Posting Breakdown Tweet")
     tweets = generate_breakdown_tweets(predictions)
 
@@ -205,7 +206,6 @@ def post_breakdown_tweets(predictions: List[str]):
 
 
 def generate_breakdown_tweets(predictions: List[str]):
-
     logger.info("Generating Breakdown Tweet")
     predictions_groupings = group_predictions(predictions)
 
@@ -229,7 +229,6 @@ def generate_breakdown_tweets(predictions: List[str]):
 
 
 def group_predictions(predictions: List[str]):
-
     logger.debug("Grouping Predictions")
     grouped = {}
 

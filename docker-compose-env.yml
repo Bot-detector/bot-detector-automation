@@ -1,68 +1,69 @@
 version: '3'
 services:
-    automation:
-        build:
-          context: .
-          dockerfile: Dockerfile
-        container_name: bd-automation
-        env_file:
-          - .env
-        networks:
-            - botdetector-network
-        depends_on:
-            - kafka
-            - api
-            - mysql
-    mysql:
-        build:
-          context: ../bot-detector-mysql
-          dockerfile: Dockerfile
-        image: bot-detector/bd-mysql:latest
-        environment:
-          - MYSQL_ROOT_PASSWORD=root_bot_buster
-          - MYSQL_USER=botssuck
-          - MYSQL_PASSWORD=botdetector
-        volumes:
-          - ../bot-detector-mysql/mount:/var/lib/mysql
-          - '../bot-detector-mysql/docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d'
-        ports:
-          - 3306:3306
-        networks:
-          - botdetector-network
-    api:
-        build:
-          context: ../Bot-Detector-Core-Files/
-          dockerfile: Dockerfile
-          target: base
-          args:
-            root_path: /
-            api_port: 5000
-        command: uvicorn src.core.server:app --host 0.0.0.0 --reload --reload-include src/*
-        container_name: bd-dev-api
-        environment:
-          - sql_uri=mysql+asyncmy://root:root_bot_buster@mysql:3306/playerdata
-          - discord_sql_uri=mysql+asyncmy://root:root_bot_buster@mysql:3306/discord
-          - token=verify_ban
-        volumes:
-          - ../Bot-Detector-Core-Files/src:/project/src:rw
-        ports:
-          - 5000:5000
-        networks:
-          - botdetector-network
-        depends_on:
-          - mysql
-    kafka:
-        image: bitnami/kafka:latest
-        environment:
-          - ALLOW_PLAINTEXT_LISTENER=yes
-          - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092,CONTROLLER://:9093,EXTERNAL://:9094
-          - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,EXTERNAL:PLAINTEXT
-          - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092,EXTERNAL://localhost:9094
-          - KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE=true
-        ports:
-          - 9094:9094
-        networks:
-          - botdetector-network
+  kafka:
+    container_name: kafka
+    image: bitnami/kafka:3.5.1-debian-11-r3
+    environment:
+      - ALLOW_PLAINTEXT_LISTENER=yes
+      - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092,CONTROLLER://:9093,EXTERNAL://:9094
+      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,EXTERNAL:PLAINTEXT
+      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092,EXTERNAL://localhost:9094
+      - KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE=false
+      # volumes:
+      #   - ./kafka:/bitnami/kafka:rw
+    ports:
+      - 9094:9094
+      - 9092:9092
+    healthcheck:
+      test: ["CMD", "kafka-topics.sh", "--list", "--bootstrap-server", "localhost:9092"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    networks:
+      - botdetector-network
+
+  kafdrop:
+    container_name: kafdrop
+    image: obsidiandynamics/kafdrop:latest
+    environment:
+      - KAFKA_BROKERCONNECT=kafka:9092
+      - JVM_OPTS=-Xms32M -Xmx64M
+      - SERVER_SERVLET_CONTEXTPATH=/
+    ports:
+      - 9000:9000
+    restart: on-failure
+    networks:
+      - botdetector-network
+    depends_on:
+      kafka:
+        condition: service_healthy
+
+  kafka_setup:
+    image: bot-detector/kafka_setup
+    container_name: kafka_setup
+    build:
+      context: ./kafka_setup
+    environment:
+      - KAFKA_BROKER=kafka:9092
+    networks:
+      - botdetector-network
+    depends_on:
+      kafka:
+        condition: service_healthy
+
+  automation:
+    image: bot-detector/automation
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: bd-automation
+    env_file:
+      - .env
+    networks:
+        - botdetector-network
+    depends_on:
+      kafka:
+        condition: service_healthy
         
 networks:
     botdetector-network:
