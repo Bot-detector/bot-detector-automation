@@ -124,7 +124,7 @@ async def get_data(receive_queue: Queue):
         if max_id > params["player_id"]:
             params["player_id"] = max_id
 
-        if today == last_day:
+        if today != last_day:
             params["player_id"] = 0
 
 
