@@ -59,14 +59,15 @@ def is_today(updated_at: str):
     return date == today
 
 
-async def parse_data(players: list[dict]):
+async def parse_data(players: list[dict]) -> tuple[list[Player], int]:
     players: list[Player] = [Player(**player) for player in players]
+    max_id = max([p.id for p in players])
     players = [
         player
         for player in players
         if len(player.name) < 13 and is_today(player.updated_at)
     ]
-    return players
+    return players, max_id
 
 
 async def get_request(
@@ -111,12 +112,16 @@ async def get_data(receive_queue: Queue):
             await asyncio.sleep(sleep_time)
             continue
 
-        players = await parse_data(players=players)
-        logger.info({"received": len(players), "max_id": {params.get("player_id")}})
+        players, max_id = await parse_data(players=players)
+        logger.info(
+            {
+                "received": len_players,
+                "parsed": len(players),
+                "max_id": {params.get("player_id")},
+            }
+        )
 
         await asyncio.gather(*[receive_queue.put(item=p) for p in players])
-
-        max_id = max([p.id for p in players])
 
         if max_id > params["player_id"]:
             params["player_id"] = max_id
