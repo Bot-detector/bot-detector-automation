@@ -130,6 +130,7 @@ async def get_data(receive_queue: Queue):
         if today != last_day:
             logger.info("New day!, resetting player_id to 0")
             params["player_id"] = 0
+            today = last_day
 
         if len_players < APPCONFIG.BATCH_SIZE:
             sleep_time = 300
