@@ -63,14 +63,17 @@ async def parse_data(players: list[dict]) -> tuple[list[Player], int]:
     players: list[Player] = [Player(**player) for player in players]
     max_id = max([p.id for p in players])
 
-    for player in players:
-        if not (len(player.name) < 13 and is_today(player.updated_at)):
-            logger.info(player)
+    # for player in players:
+    #     if not len(player.name) < 13:
+    #         logger.debug(f"len({player.name}) is gt than 13")
+    #         skip = True
+    #     if is_today(player.updated_at):
+    #         logger.debug(f"len({player.updated_at}) is today")
 
     players = [
         player
         for player in players
-        if len(player.name) < 13 and is_today(player.updated_at)
+        if len(player.name) < 13 and not is_today(player.updated_at)
     ]
     return players, max_id
 
