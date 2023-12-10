@@ -21,6 +21,7 @@ async def kafka_producer():
     producer = AIOKafkaProducer(
         bootstrap_servers=[APPCONFIG.KAFKA_HOST],
         value_serializer=lambda v: json.dumps(v).encode(),
+        acks="all",
     )
     await producer.start()
     return producer
