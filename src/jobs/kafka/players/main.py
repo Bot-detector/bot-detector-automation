@@ -108,7 +108,7 @@ async def get_data(receive_queue: Queue):
         "greater_than": 1,
     }
     headers = {"token": APPCONFIG.API_TOKEN}
-    url = f"{APPCONFIG.ENDPOINT}/v2/player/"
+    url = f"{APPCONFIG.ENDPOINT}/v2/player"
 
     while True:
         today = datetime.now().date()
