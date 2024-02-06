@@ -16,17 +16,15 @@ logger = logging.getLogger(__name__)
 APPCONFIG = config.AppConfig()
 
 
-async def check_total_consumer_lag(topic: str, group_id:str = "scraper"):
-    consumer = AIOKafkaConsumer(
-        bootstrap_servers=[APPCONFIG.KAFKA_HOST],
-        group_id=group_id
-    )
+async def check_total_consumer_lag(consumer:AIOKafkaConsumer, topic: str):
     total_lag = 0
 
     # Get the list of partitions for the topic
     partitions = consumer.partitions_for_topic(topic)
     logger.info(f"{partitions=}")
-    
+    if partitions is None:
+        logger.warning("partitions is none")
+        return 0
     for partition in partitions:
         tp = TopicPartition(topic, partition)
         
@@ -43,6 +41,17 @@ async def check_total_consumer_lag(topic: str, group_id:str = "scraper"):
         total_lag += lag
 
     return total_lag
+
+async def kafka_consumer(topic: str, group: str):
+    consumer = AIOKafkaConsumer(
+        topic,
+        bootstrap_servers=[APPCONFIG.KAFKA_HOST],
+        group_id=group,
+        value_deserializer=lambda x: json.loads(x.decode("utf-8")),
+        auto_offset_reset="earliest",
+    )
+    await consumer.start()
+    return consumer
 
 async def kafka_producer():
     producer = AIOKafkaProducer(
@@ -126,7 +135,7 @@ async def get_request(
     return data, error
 
 
-async def get_data(receive_queue: Queue):
+async def get_data(receive_queue: Queue, consumer:AIOKafkaConsumer):
     last_day = datetime.now().date()
     max_id = 0
     params = {
@@ -140,7 +149,7 @@ async def get_data(receive_queue: Queue):
     while True:
         today = datetime.now().date()
 
-        lag = await check_total_consumer_lag(topic="player", group_id="scraper")
+        lag = await check_total_consumer_lag(consumer=consumer, topic="player")
 
         if lag > 100_000:
             logger.info(f"lag is to high: {lag=}")
@@ -187,8 +196,9 @@ async def main():
     send_queue = Queue()
     receive_queue = Queue()
     producer = await kafka_producer()
+    consumer = await kafka_consumer(topic="player", group="scraper")
 
-    asyncio.create_task(get_data(receive_queue=receive_queue))
+    asyncio.create_task(get_data(receive_queue=receive_queue, consumer=consumer))
     asyncio.create_task(
         send_messages(topic="player", producer=producer, send_queue=send_queue)
     )
