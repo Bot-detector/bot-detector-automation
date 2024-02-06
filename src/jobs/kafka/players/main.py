@@ -25,11 +25,12 @@ async def check_total_consumer_lag(consumer:AIOKafkaConsumer, topic: str):
     if partitions is None:
         logger.warning("partitions is none")
         return 0
+    
     for partition in partitions:
         tp = TopicPartition(topic, partition)
         
         # Get the last offset committed by the consumer
-        committed = consumer.committed(tp)
+        committed = await consumer.committed(tp)
         
         # Get the latest offset in the topic
         end_offset = await consumer.end_offsets([tp])
