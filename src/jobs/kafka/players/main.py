@@ -19,7 +19,6 @@ APPCONFIG = config.AppConfig()
 async def check_total_consumer_lag(topic: str, group_id:str = "scraper"):
     consumer = AIOKafkaConsumer(
         bootstrap_servers=[APPCONFIG.KAFKA_HOST],
-        topic=topic,
         group_id=group_id
     )
     total_lag = 0
