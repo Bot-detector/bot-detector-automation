@@ -154,7 +154,7 @@ async def get_data(receive_queue: Queue, consumer:AIOKafkaConsumer):
 
         if lag > 100_000:
             logger.info(f"lag is to high: {lag=}")
-            await asyncio.sleep(5)
+            await asyncio.sleep(60)
             continue
 
         players, error = await get_request(url=url, params=params, headers=headers)
