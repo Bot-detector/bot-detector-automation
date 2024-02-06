@@ -25,6 +25,7 @@ async def check_total_consumer_lag(topic: str, group_id:str = "scraper"):
 
     # Get the list of partitions for the topic
     partitions = consumer.partitions_for_topic(topic)
+    logger.info(f"{partitions=}")
     
     for partition in partitions:
         tp = TopicPartition(topic, partition)
