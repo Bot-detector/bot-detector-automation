@@ -7,8 +7,7 @@ from time import time
 from typing import Any
 
 import aiohttp
-from aiokafka import AIOKafkaProducer
-
+from aiokafka import AIOKafkaConsumer, AIOKafkaProducer, TopicPartition
 from config import config
 
 from .models import Player
@@ -16,6 +15,34 @@ from .models import Player
 logger = logging.getLogger(__name__)
 APPCONFIG = config.AppConfig()
 
+
+async def check_total_consumer_lag(topic: str, group_id:str = "scraper"):
+    consumer = AIOKafkaConsumer(
+        bootstrap_servers=[APPCONFIG.KAFKA_HOST],
+        topic=topic,
+        group_id=group_id
+    )
+    total_lag = 0
+
+    # Get the list of partitions for the topic
+    partitions = consumer.partitions_for_topic(topic)
+    
+    for partition in partitions:
+        tp = TopicPartition(topic, partition)
+        
+        # Get the last offset committed by the consumer
+        committed = consumer.committed(tp)
+        
+        # Get the latest offset in the topic
+        end_offset = await consumer.end_offsets([tp])
+        
+        # Calculate the lag for this partition
+        lag = end_offset[tp] - committed
+
+        # Add the lag for this partition to the total lag
+        total_lag += lag
+
+    return total_lag
 
 async def kafka_producer():
     producer = AIOKafkaProducer(
@@ -112,7 +139,16 @@ async def get_data(receive_queue: Queue):
 
     while True:
         today = datetime.now().date()
+
+        lag = await check_total_consumer_lag(topic="player", group_id="scraper")
+
+        if lag > 100_000:
+            logger.info(f"lag is to high: {lag=}")
+            await asyncio.sleep(5)
+            continue
+
         players, error = await get_request(url=url, params=params, headers=headers)
+
 
         if error is not None:
             sleep_time = 30

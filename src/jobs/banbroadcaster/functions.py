@@ -87,7 +87,7 @@ def broadcast_bans_complete(num_bans: int):
         embed = DiscordEmbed(
             title="Bans Added!",
             color="000000",
-            description=f"Bans were added to the project's total. Time to check your kc! ",
+            description="Bans were added to the project's total. Time to check your kc! ",
         )
         embed.set_timestamp()
         embed.add_embed_field(
@@ -114,7 +114,7 @@ def broadcast_totals(
     embed = DiscordEmbed(
         title="Pending Bans Stats",
         color="000000",
-        description=f"Latest Ban Totals From Our Hiscores Scrapes",
+        description="Latest Ban Totals From Our Hiscores Scrapes",
     )
     embed.set_timestamp()
     embed.add_embed_field(
@@ -170,7 +170,7 @@ def broadcast_names(names_list: List[str]):
 
         try:
             webhook.execute()
-        except Exception as e:
+        except Exception:
             pass
         time.sleep(5)
 

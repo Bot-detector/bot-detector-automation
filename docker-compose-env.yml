@@ -11,9 +11,9 @@ services:
       - KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE=false
       # volumes:
       #   - ./kafka:/bitnami/kafka:rw
-    ports:
-      - 9094:9094
-      - 9092:9092
+    expose:
+      - 9094
+      - 9092
     healthcheck:
       test: ["CMD", "kafka-topics.sh", "--list", "--bootstrap-server", "localhost:9092"]
       interval: 30s
@@ -30,7 +30,7 @@ services:
       - JVM_OPTS=-Xms32M -Xmx64M
       - SERVER_SERVLET_CONTEXTPATH=/
     ports:
-      - 9000:9000
+      - 9999:9000
     restart: on-failure
     networks:
       - botdetector-network

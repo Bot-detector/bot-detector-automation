@@ -4,7 +4,6 @@ from datetime import date
 
 import requests
 from discord import File, SyncWebhook
-from discord_webhook import DiscordWebhook
 
 from config import config
 
