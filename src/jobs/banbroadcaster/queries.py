@@ -39,7 +39,7 @@ sql_get_banned_bots_names = """
         pl.name as name,
         pr.Prediction as prediction
     FROM Players pl
-    JOIN Predictions pr on pred.id = pls.id
+    JOIN Predictions pr on pr.id = pl.id
     WHERE 1=1
         and pl.possible_ban = 1 
         AND pl.confirmed_ban = 0
