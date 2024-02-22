@@ -6,7 +6,6 @@ WHERE 1=1
     AND possible_ban = 1
     AND confirmed_ban = 0
     AND label_jagex = 2
-)
 """
 
 sql_get_count_banned_real_players = """
