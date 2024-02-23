@@ -11,11 +11,18 @@ services:
       - KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE=false
       # volumes:
       #   - ./kafka:/bitnami/kafka:rw
-    expose:
-      - 9094
-      - 9092
+    ports:
+      - 9094:9094
+      - 9092:9092
     healthcheck:
-      test: ["CMD", "kafka-topics.sh", "--list", "--bootstrap-server", "localhost:9092"]
+      test:
+        [
+          "CMD",
+          "kafka-topics.sh",
+          "--list",
+          "--bootstrap-server",
+          "localhost:9092"
+        ]
       interval: 30s
       timeout: 10s
       retries: 5
@@ -30,7 +37,7 @@ services:
       - JVM_OPTS=-Xms32M -Xmx64M
       - SERVER_SERVLET_CONTEXTPATH=/
     ports:
-      - 9999:9000
+      - 9000:9000
     restart: on-failure
     networks:
       - botdetector-network
@@ -39,10 +46,10 @@ services:
         condition: service_healthy
 
   kafka_setup:
-    image: bot-detector/kafka_setup
     container_name: kafka_setup
     build:
       context: ./kafka_setup
+    image: kafka_setup
     environment:
       - KAFKA_BROKER=kafka:9092
     networks:
@@ -51,6 +58,26 @@ services:
       kafka:
         condition: service_healthy
 
+  mysql:
+    container_name: database
+    build:
+      context: ./mysql
+    image: mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=root_bot_buster
+    volumes:
+      - ./mysql/docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d
+      - ./mysql/conf.d:/etc/mysql/conf.d
+      # - ./mysql/mount:/var/lib/mysql # creates persistence
+    ports:
+      - 3306:3306
+    networks:
+      - botdetector-network
+    healthcheck:
+      test: "mysqladmin ping -h localhost -u root -proot_bot_buster"
+      interval: 30s
+      timeout: 10s
+      retries: 5
   automation:
     image: bot-detector/automation
     build:
@@ -60,10 +87,12 @@ services:
     env_file:
       - .env
     networks:
-        - botdetector-network
+      - botdetector-network
     depends_on:
       kafka:
         condition: service_healthy
-        
+      mysql:
+        condition: service_healthy
+
 networks:
-    botdetector-network:
+  botdetector-network:
