@@ -22,7 +22,8 @@ async def check_total_consumer_lag(consumer: AIOKafkaConsumer, topic: str):
 
     # Get the list of partitions for the topic
     partitions = consumer.partitions_for_topic(topic)
-    logger.info(f"{partitions=}")
+    # logger.info(f"{partitions=}")
+
     if partitions is None:
         logger.warning("partitions is none")
         return 0
@@ -147,17 +148,25 @@ async def get_request(
     data = None
     error = None
     async with aiohttp.ClientSession() as session:
-        async with session.get(url, params=params, headers=headers) as resp:
-            if resp.ok:
-                data = await resp.json()
-            else:
-                error = {
-                    "status": resp.status,
-                    "body": await resp.text(),
-                    "url": url,
-                    "params": params,
-                }
-                logger.error(error)
+        try:
+            async with session.get(url, params=params, headers=headers) as resp:
+                if resp.ok:
+                    data = await resp.json()
+                else:
+                    error = {
+                        "status": resp.status,
+                        "body": await resp.text(),
+                        "url": url,
+                        "params": params,
+                    }
+                    logger.error(error)
+        except aiohttp.ClientConnectorError as e:
+            error = {
+                "exception": str(e),
+                "url": url,
+                "params": params,
+            }
+            logger.error(error)
     return data, error
 
 
@@ -187,7 +196,7 @@ async def get_data(receive_queue: Queue, consumer: AIOKafkaConsumer):
 
         if error is not None:
             sleep_time = 30
-            logger.info(f"sleeping {sleep_time}")
+            logger.info(f"[Error] sleeping: {sleep_time}")
             await asyncio.sleep(sleep_time)
             continue
 
