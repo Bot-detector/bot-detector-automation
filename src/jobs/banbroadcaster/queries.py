@@ -30,7 +30,7 @@ WHERE 1=1
     AND pl.id NOT IN (
         SELECT
             player_id
-        FROM scraper_data_v3
+        FROM highscore_data_latest
     )
 """
 
