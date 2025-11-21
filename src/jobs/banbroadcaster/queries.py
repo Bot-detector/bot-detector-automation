@@ -10,13 +10,14 @@ WHERE 1=1
 
 sql_get_count_banned_real_players = """
     SELECT
-        COUNT(*) as real_bans
-    FROM Players pls
-    JOIN Predictions pred on pred.name = pls.name
-    WHERE possible_ban = 1 
-        AND confirmed_ban = 0
-        AND label_jagex = 2
-        AND pred.Prediction LIKE "Real_player"
+        COUNT(pl.id) as real_bans
+    FROM Players pl
+    JOIN prediction_latest pred on pred.player_id = pl.id
+    WHERE 1=1
+        AND pl.possible_ban = 1 
+        AND pl.confirmed_ban = 0
+        AND pl.label_jagex = 2
+        AND pred.prediction = "Real_player"
 """
 
 sql_get_count_banned_no_data = """
@@ -37,22 +38,22 @@ WHERE 1=1
 sql_get_banned_bots_names = """
     SELECT
         pl.name as name,
-        pr.Prediction as prediction
+        pr.prediction as prediction
     FROM Players pl
-    JOIN Predictions pr on pr.id = pl.id
+    JOIN prediction_latest pr on pr.player_id = pl.id
     WHERE 1=1
         and pl.possible_ban = 1 
         AND pl.confirmed_ban = 0
         AND pl.label_jagex = 2
-        AND pr.Real_player < 50
+        AND JSON_EXTRACT(pr.predictions , '$."Real_Player"') < .5
 """
 
 sql_apply_bot_bans = """
 UPDATE Players pl
-JOIN Predictions pr on pr.id = pl.id
+JOIN prediction_latest pr on pr.player_id = pl.id
     SET pl.confirmed_ban = 1
 WHERE 1 = 1
     AND pl.label_jagex = 2
     AND pl.possible_ban = 1
-    AND pr.Real_player < 50
+    AND JSON_EXTRACT(pr.predictions , '$."Real_Player"') < .5
 """
